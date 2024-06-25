@@ -12,7 +12,15 @@ if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
 endif(CCACHE_FOUND)
 
+add_subdirectory(vendor/clipp)
+include_directories(vendor/clipp/include)
+
+add_subdirectory(vendor/json)
+include_directories(vendor/json/include)
+
 include_directories(./include ./vendor)
-add_executable(${PROJECT_NAME} ./src/main.cpp)
+file(GLOB SRC_FILES ./src/*)
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+target_link_libraries(${PROJECT_NAME} clipp curl)
 
 install(TARGETS ${PROJECT_NAME})
