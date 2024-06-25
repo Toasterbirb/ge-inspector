@@ -1,0 +1,4 @@
+ge-inspector
+*.o
+.cache
+build/
