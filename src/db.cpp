@@ -1,8 +1,10 @@
 #include "DB.hpp"
+#include "ItemSortLambdas.hpp"
 
 #include <curl/curl.h>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -73,16 +75,36 @@ namespace ge
 
 	void update_db()
 	{
-		nlohmann::json price_data = download_json("https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson");
-		nlohmann::json limit_data = download_json("https://runescape.wiki/?title=Module:GELimits/data.json&action=raw&ctype=application%2Fjson");
-		nlohmann::json prev_price_data = download_json("https://runescape.wiki/?title=Module:LastPrices/data.json&action=raw&ctype=application%2Fjson");
-		nlohmann::json volume_data = download_json("https://runescape.wiki/?title=Module:GEVolumes/data.json&action=raw&ctype=application%2Fjson");
-		nlohmann::json high_alch_data = download_json("https://runescape.wiki/?title=Module:GEHighAlchs/data.json&action=raw&ctype=application%2Fjson");
+		std::future<nlohmann::json> price_data_future = std::async(std::launch::async,
+				download_json,
+				"https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson");
+
+		std::future<nlohmann::json> limit_data_future = std::async(std::launch::async,
+				download_json,
+				"https://runescape.wiki/?title=Module:GELimits/data.json&action=raw&ctype=application%2Fjson");
+
+		std::future<nlohmann::json> prev_price_data_future = std::async(std::launch::async,
+				download_json,
+				"https://runescape.wiki/?title=Module:LastPrices/data.json&action=raw&ctype=application%2Fjson");
+
+		std::future<nlohmann::json> volume_data_future = std::async(std::launch::async,
+				download_json,
+				"https://runescape.wiki/?title=Module:GEVolumes/data.json&action=raw&ctype=application%2Fjson");
+
+		std::future<nlohmann::json> high_alch_data_future = std::async(std::launch::async,
+				download_json,
+				"https://runescape.wiki/?title=Module:GEHighAlchs/data.json&action=raw&ctype=application%2Fjson");
 
 		nlohmann::json db;
 
 		// Process the data
 		{
+			nlohmann::json price_data = price_data_future.get();
+			nlohmann::json limit_data = limit_data_future.get();
+			nlohmann::json prev_price_data = prev_price_data_future.get();
+			nlohmann::json volume_data = volume_data_future.get();
+			nlohmann::json high_alch_data = high_alch_data_future.get();
+
 			// Skip the first two values since they are useless
 			auto json_begin = price_data.begin();
 			json_begin++;
@@ -105,7 +127,7 @@ namespace ge
 					item.volume = volume_data.at(i.key());
 
 				if (high_alch_data.contains(i.key()))
-					item.high_alch = volume_data.at(i.key());
+					item.high_alch = high_alch_data.at(i.key());
 
 				db["items"].push_back(item);
 			}
@@ -127,5 +149,34 @@ namespace ge
 		std::vector<item> items = db["items"];
 
 		return items;
+	}
+
+	void sort_items(std::vector<item>& items, const sort_mode mode)
+	{
+		switch (mode)
+		{
+			case volume:
+				std::sort(items.begin(), items.end(), ge::sort_by_volume);
+				break;
+
+			case price:
+				std::sort(items.begin(), items.end(), ge::sort_by_price);
+				break;
+
+			case alch:
+				std::sort(items.begin(), items.end(), ge::sort_by_alch);
+				break;
+
+			case cost:
+				std::sort(items.begin(), items.end(), ge::sort_by_total_cost);
+				break;
+
+			case limit:
+				std::sort(items.begin(), items.end(), ge::sort_by_limit);
+				break;
+
+			case none:
+				break;
+		}
 	}
 }

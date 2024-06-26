@@ -3,7 +3,6 @@
 #include "Types.hpp"
 
 #include <nlohmann/json.hpp>
-#include <unordered_map>
 
 namespace ge
 {
@@ -15,6 +14,12 @@ namespace ge
 		i32 prev_price{};
 		i64 volume{};
 		i32 high_alch{};
+
+	};
+
+	enum sort_mode
+	{
+		volume, price, alch, cost, limit, none
 	};
 
 	void to_json(nlohmann::json& j, const item& i);
@@ -24,4 +29,6 @@ namespace ge
 	void update_db();
 
 	std::vector<item> load_db();
+
+	void sort_items(std::vector<item>& items, const sort_mode mode);
 }
