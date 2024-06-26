@@ -20,6 +20,7 @@ int main(int argc, char** argv)
 	bool pick_random_item = false;
 	bool check_member_status = false;
 	bool find_f2p_items = false;
+	bool find_profitable_to_alch_items = false;
 
 	i64 min_price = 0;
 	i64 max_price = std::numeric_limits<i64>::max();
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
 		clipp::option("--max-volume").doc("maximum volume") & clipp::value("volume", max_volume),
 		clipp::option("--min-limit").doc("minimum buy limit") & clipp::value("limit", min_limit),
 		clipp::option("--max-limit").doc("maximum buy limit") & clipp::value("limit", max_limit),
+		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
 		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
 		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
@@ -89,6 +91,10 @@ int main(int argc, char** argv)
 		ge::update_db();
 
 	std::vector<ge::item> items = ge::load_db();
+
+	// Check the cost of a nature rune (we are assuming that a fire battlestaff is used)
+	// This variable is only really used if we are checking for alching profitability
+	u64 nature_rune_cost = ge::item_cost("Nature rune");
 
 	// Run the query
 	std::vector<ge::item> filtered_items;
@@ -119,7 +125,9 @@ int main(int argc, char** argv)
 			name_filter = lowercase_name.find(name_contains) != std::string::npos;
 		}
 
-		return price_filters && name_filter;
+		bool profitable_to_alch = find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
+
+		return price_filters && name_filter && profitable_to_alch;
 	});
 
 	// Pick a random item from results

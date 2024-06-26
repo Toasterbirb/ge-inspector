@@ -95,4 +95,5 @@ namespace ge
 
 	void sort_items(std::vector<item>& items, const sort_mode mode);
 	void update_filtered_item_data(std::vector<item>& items);
+	u64 item_cost(const std::string& name);
 }

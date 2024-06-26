@@ -1,7 +1,6 @@
 #include "DB.hpp"
 #include "ItemSortLambdas.hpp"
 
-#include <array>
 #include <assert.h>
 #include <curl/curl.h>
 #include <execution>
@@ -407,5 +406,15 @@ namespace ge
 			ge::members_item members = DATABASE["items"][db_index]["members"];
 			item.members = members;
 		}
+	}
+
+	u64 item_cost(const std::string& name)
+	{
+		// Find the item in the database
+		auto it = std::find_if(std::execution::par_unseq, DATABASE["items"].begin(), DATABASE["items"].end(), [&name](const nlohmann::json& json_item){
+			return json_item["name"] == name;
+		});
+
+		return (*it)["price"];
 	}
 }
