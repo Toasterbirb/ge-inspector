@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 	// Run the query
 	std::vector<ge::item> filtered_items;
 	std::copy_if(std::execution::par, items.begin(), items.end(), std::back_inserter(filtered_items), [&](const ge::item& item){
-		bool price_filters = item.price >= min_price
+		bool generic_filters = item.price >= min_price
 					&& item.price <= max_price
 					&& (item.price * item.limit) <= budget
 					&& (item.price * item.limit) >= min_cost
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
 		bool profitable_to_alch = find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
 
-		return price_filters && name_filter && profitable_to_alch;
+		return generic_filters && name_filter && profitable_to_alch;
 	});
 
 	// Pick a random item from results
