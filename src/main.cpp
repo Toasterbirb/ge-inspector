@@ -258,9 +258,8 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			std::cout << "\nTODO: Fix reverse sort\n";
-			// for (ge::item& item : filtered_items | std::views::reverse)
-			// 	print_item_line(item);
+			for (ge::item& item : filtered_items | std::views::reverse)
+				print_item_line(item);
 		}
 	}
 
