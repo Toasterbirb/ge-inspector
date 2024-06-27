@@ -2,7 +2,6 @@
 #include "DB.hpp"
 
 #include <assert.h>
-#include <execution>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -154,7 +153,7 @@ namespace ge
 	void update_item(const item& item)
 	{
 		nlohmann::json& db_items = DATABASE["items"];
-		auto item_it = std::find_if(std::execution::par_unseq, db_items.begin(), db_items.end(), [item](const nlohmann::json& json_item){
+		auto item_it = std::find_if(db_items.begin(), db_items.end(), [item](const nlohmann::json& json_item){
 			return json_item["name"] == item.name;
 		});
 
@@ -226,7 +225,7 @@ namespace ge
 
 					for (const nlohmann::json& category_item : category_json["items"])
 					{
-						auto item_it = std::find_if(std::execution::par_unseq, db_items.begin(), db_items.end(), [category_item](const nlohmann::json& json_item){
+						auto item_it = std::find_if(db_items.begin(), db_items.end(), [category_item](const nlohmann::json& json_item){
 							return json_item["id"] == category_item["id"];
 						});
 
@@ -257,7 +256,7 @@ namespace ge
 			item.members = ge::members_item::no_data;
 
 			// Find the item in the database and update its information
-			auto item_it = std::find_if(std::execution::par_unseq, DATABASE["items"].begin(), DATABASE["items"].end(), [item](const nlohmann::json& json_item){
+			auto item_it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [item](const nlohmann::json& json_item){
 				return json_item["id"] == item.id;
 			});
 
@@ -304,7 +303,7 @@ namespace ge
 	u64 item_cost(const std::string& name)
 	{
 		// Find the item in the database
-		auto it = std::find_if(std::execution::par_unseq, DATABASE["items"].begin(), DATABASE["items"].end(), [&name](const nlohmann::json& json_item){
+		auto it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [&name](const nlohmann::json& json_item){
 			return json_item["name"] == name;
 		});
 

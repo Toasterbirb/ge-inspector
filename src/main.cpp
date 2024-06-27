@@ -8,7 +8,6 @@
 #include <cctype>
 #include <clipp.h>
 #include <ctime>
-#include <execution>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -140,7 +139,7 @@ int main(int argc, char** argv)
 
 	// Run the query
 	std::vector<ge::item> filtered_items;
-	std::copy_if(std::execution::par, items.begin(), items.end(), std::back_inserter(filtered_items), [&](const ge::item& item){
+	std::copy_if(items.begin(), items.end(), std::back_inserter(filtered_items), [&](const ge::item& item){
 		bool generic_filters = item.price >= min_price
 					&& item.price <= max_price
 					&& (item.price * item.limit) <= budget
