@@ -14,6 +14,7 @@
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <ranges>
+#include <regex>
 
 int main(int argc, char** argv)
 {
@@ -24,6 +25,7 @@ int main(int argc, char** argv)
 	bool find_f2p_items = false;
 	bool find_profitable_to_alch_items = false;
 	bool print_short_price = false;
+	std::string regex_pattern;
 
 	i64 min_price = 0;
 	i64 max_price = std::numeric_limits<i64>::max();
@@ -84,6 +86,7 @@ int main(int argc, char** argv)
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
 		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
 		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
+		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
 		(clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit) & clipp::option("--invert", "-i").set(invert_sort).doc("invert the sorting result"))
 	);
@@ -138,9 +141,16 @@ int main(int argc, char** argv)
 			name_filter = lowercase_name.find(name_contains) != std::string::npos;
 		}
 
+		bool regex_match = true;
+		if (!regex_pattern.empty())
+		{
+			std::regex pattern(regex_pattern);
+			regex_match = std::regex_match(item.name, pattern);
+		}
+
 		bool profitable_to_alch = find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
 
-		return generic_filters && name_filter && profitable_to_alch;
+		return generic_filters && name_filter && regex_match && profitable_to_alch;
 	});
 
 	// Pick a random item from results
