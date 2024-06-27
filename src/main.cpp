@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 
 	// Check the cost of a nature rune (we are assuming that a fire battlestaff is used)
 	// This variable is only really used if we are checking for alching profitability
-	u64 nature_rune_cost = ge::item_cost("Nature rune");
+	u64 nature_rune_cost = find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
 
 	// Run the query
 	std::vector<ge::item> filtered_items;
