@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 		u8 name_width = 42;
 		u8 price_width = 12;
 		u8 volume_width = 10;
-		u8 total_cost_width = 12;
+		u8 total_cost_width = 13;
 		u8 limit_width = 10;
 		u8 high_alch_width = 12;
 		u8 members_width = 10;
