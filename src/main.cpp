@@ -94,7 +94,15 @@ int main(int argc, char** argv)
 		clipp::option("--no-header").set(print_no_header).doc("don't print the header row")
 	);
 
-	clipp::parse(argc, argv, cli);
+	if (!clipp::parse(argc, argv, cli))
+	{
+		std::cout << "## Missing or invalid arguments ##\n\n"
+			<< "Usage: ge-inspector [options...]\n"
+			<< clipp::usage_lines(cli) << "\n\n"
+			<< "For more information check the output of 'ge-inspector --help'\n";
+
+		return 1;
+	}
 
 	if (show_help)
 	{
