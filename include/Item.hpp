@@ -2,8 +2,10 @@
 
 #include "Types.hpp"
 
+#include <array>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 namespace ge
@@ -85,6 +87,14 @@ namespace ge
 	enum class sort_mode
 	{
 		volume, price, alch, cost, limit, none
+	};
+
+	static inline std::array sorting_modes = {
+		std::make_tuple(sort_mode::volume, "volume", "sort by volume"),
+		std::make_tuple(sort_mode::price, "price", "sort by price"),
+		std::make_tuple(sort_mode::alch, "alch", "sort by the high alchemy price"),
+		std::make_tuple(sort_mode::cost, "cost", "sort by total cost"),
+		std::make_tuple(sort_mode::limit, "limit", "sort by buy limit"),
 	};
 
 	void to_json(nlohmann::json& j, const item& i);

@@ -57,25 +57,9 @@ int main(int argc, char** argv)
 
 	ge::sort_mode sort_mode = ge::sort_mode::none;
 
-	auto cli_sort_volume = (
-		clipp::command("volume").set(sort_mode, ge::sort_mode::volume) % "sort by volume"
-	);
-
-	auto cli_sort_price = (
-		clipp::command("price").set(sort_mode, ge::sort_mode::price) % "sort by price"
-	);
-
-	auto cli_sort_alch = (
-		clipp::command("alch").set(sort_mode, ge::sort_mode::alch) % "sort by the high alchemy price"
-	);
-
-	auto cli_sort_cost = (
-		clipp::command("cost").set(sort_mode, ge::sort_mode::cost) % "sort by total cost"
-	);
-
-	auto cli_sort_limit = (
-		clipp::command("limit").set(sort_mode, ge::sort_mode::limit) % "sort by buy limit"
-	);
+	clipp::group sorting_mode_commands;
+	for (const auto& [mode, name, description] : ge::sorting_modes)
+		sorting_mode_commands.push_back(clipp::command(name).set(sort_mode, mode).doc(description));
 
 	// Generate the colorscheme option list
 	clipp::group colorscheme_commands;
@@ -105,7 +89,7 @@ int main(int argc, char** argv)
 		(clipp::option("--max-alch") & clipp::value("alch", max_alch)) % "maximum high alchemy amount",
 		(clipp::option("--min-cost") & clipp::value("cost", min_cost)) % "minimum cost of the flip",
 		(clipp::option("--budget", "-b") & clipp::value("budget", budget)) % "maximum budget for total cost",
-		(clipp::option("--sort", "-s") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit)) % "sort the results",
+		(clipp::option("--sort", "-s") & clipp::one_of(sorting_mode_commands)) % "sort the results",
 		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order",
 		(clipp::option("--color", "-c") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
 	);
