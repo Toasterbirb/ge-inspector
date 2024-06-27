@@ -88,7 +88,8 @@ int main(int argc, char** argv)
 		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
 		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
-		(clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit) & clipp::option("--invert", "-i").set(invert_sort).doc("invert the sorting result"))
+		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit),
+		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order")
 	);
 
 	clipp::parse(argc, argv, cli);
@@ -254,15 +255,11 @@ int main(int argc, char** argv)
 		};
 
 		if (!invert_sort)
-		{
-			for (size_t i = 0; i < filtered_items.size(); ++i)
-				print_item_line(filtered_items[i]);
-		}
+			for (ge::item& item : filtered_items)
+				print_item_line(item);
 		else
-		{
 			for (ge::item& item : filtered_items | std::views::reverse)
 				print_item_line(item);
-		}
 	}
 
 	return 0;
