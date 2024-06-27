@@ -144,13 +144,7 @@ int main(int argc, char** argv)
 			name_filter = lowercase_name.find(name_contains) != std::string::npos;
 		}
 
-		bool regex_match = true;
-		if (!regex_pattern.empty())
-		{
-			std::regex pattern(regex_pattern);
-			regex_match = std::regex_match(item.name, pattern);
-		}
-
+		bool regex_match = regex_pattern.empty() ? true : std::regex_match(item.name, std::regex(regex_pattern));
 		bool profitable_to_alch = find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
 
 		return generic_filters && name_filter && regex_match && profitable_to_alch;
