@@ -18,18 +18,13 @@
 
 int main(int argc, char** argv)
 {
-	enum class member_filter
-	{
-		f2p, p2p, all
-	};
-
 	struct range
 	{
 		i64 min = 0;
 		i64 max = std::numeric_limits<i64>::max();
 	};
 
-	member_filter member_filter = member_filter::all;
+	ge::members_item member_filter = ge::members_item::unknown;
 
 	bool update_db = false;
 	bool show_help = false;
@@ -68,8 +63,8 @@ int main(int argc, char** argv)
 		clipp::option("--update", "-u").set(update_db) % "update the database before processing the query",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
-		clipp::option("--f2p", "-f").set(member_filter, member_filter::f2p) % "look for f2p items",
-		clipp::option("--p2p", "-p").set(member_filter, member_filter::p2p) % "look for p2p items",
+		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
+		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
@@ -178,32 +173,14 @@ int main(int argc, char** argv)
 		ge::item item = filtered_items.at(rand() % filtered_items.size());
 
 		// If find_random_f2p_item is true, loop until a f2p item is found
-		if (member_filter != member_filter::all)
+		if (member_filter != ge::members_item::unknown)
 		{
 			u64 checked_item_count = 0;
 			constexpr u64 checked_items_hard_cap = 64;
 			const u64 max_checked_items = filtered_items.size() < checked_items_hard_cap ? filtered_items.size() : checked_items_hard_cap;
 
 			std::cout << "\rItems checked: 0/" << max_checked_items << std::flush;
-
-			ge::members_item members_item_mode = ge::members_item::no;
-			switch (member_filter)
-			{
-				case member_filter::f2p:
-					members_item_mode = ge::members_item::no;
-					break;
-
-				case member_filter::p2p:
-					members_item_mode = ge::members_item::yes;
-					break;
-
-				case member_filter::all:
-					std::cout << "You broke the matrix o.O\n";
-					exit(1);
-					break;
-			}
-
-			while (item.members != members_item_mode && checked_item_count < max_checked_items)
+			while (item.members != member_filter && checked_item_count < max_checked_items)
 			{
 				item = filtered_items.at(rand() % filtered_items.size());
 
@@ -278,12 +255,8 @@ int main(int argc, char** argv)
 			if (check_member_status && ge::update_item_member_status(item))
 				ge::update_filtered_item_data(filtered_items);
 
-			// If the f2p filter is enabled, skip members items
-			if (member_filter == member_filter::f2p && item.members != ge::members_item::no)
-				return;
-
-			// If the p2p filter is enabled, skip f2p items
-			if (member_filter == member_filter::p2p && item.members != ge::members_item::yes)
+			// Handle members status filters
+			if (member_filter != ge::members_item::unknown && item.members != member_filter)
 				return;
 
 			const u64 total_item_cost = item.price * item.limit;
