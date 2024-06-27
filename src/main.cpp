@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 
 		ge::item item = filtered_items.at(rand() % filtered_items.size());
 
-		// If find_random_f2p_item is true, loop until a f2p item is found
+		// If a members item filter is used, loop until an item is found that matches the filter
 		if (member_filter != ge::members_item::unknown)
 		{
 			u64 checked_item_count = 0;
