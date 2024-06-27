@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 	bool find_f2p_items = false;
 	bool find_profitable_to_alch_items = false;
 	bool print_short_price = false;
+	bool print_no_header = false;
 	std::string regex_pattern;
 
 	i64 min_price = 0;
@@ -89,7 +90,8 @@ int main(int argc, char** argv)
 		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
 		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit),
-		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order")
+		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order"),
+		clipp::option("--no-header").set(print_no_header).doc("don't print the header row")
 	);
 
 	clipp::parse(argc, argv, cli);
@@ -219,15 +221,18 @@ int main(int argc, char** argv)
 		u8 high_alch_width = 12;
 		u8 members_width = 10;
 
-		std::cout << std::left
-			<< std::setw(name_width) << "Name"
-			<< std::setw(price_width) << "Price"
-			<< std::setw(volume_width) << "Volume"
-			<< std::setw(total_cost_width) << "Total cost"
-			<< std::setw(limit_width) << "Limit"
-			<< std::setw(high_alch_width) << "High alch"
-			<< std::setw(members_width) << "Members"
-			<< "\n";
+		if (!print_no_header)
+		{
+			std::cout << std::left
+				<< std::setw(name_width) << "Name"
+				<< std::setw(price_width) << "Price"
+				<< std::setw(volume_width) << "Volume"
+				<< std::setw(total_cost_width) << "Total cost"
+				<< std::setw(limit_width) << "Limit"
+				<< std::setw(high_alch_width) << "High alch"
+				<< std::setw(members_width) << "Members"
+				<< "\n";
+		}
 
 		auto print_item_line = [&](ge::item& item)
 		{
