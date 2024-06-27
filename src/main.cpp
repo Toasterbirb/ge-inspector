@@ -87,7 +87,9 @@ int main(int argc, char** argv)
 
 	if (show_help)
 	{
-		std::cout << clipp::make_man_page(cli, "ge-inspector");
+		auto fmt = clipp::doc_formatting{}.doc_column(30);
+
+		std::cout << clipp::make_man_page(cli, "ge-inspector", fmt);
 		return 0;
 	}
 
