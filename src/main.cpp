@@ -26,6 +26,7 @@ int main(int argc, char** argv)
 	bool find_profitable_to_alch_items = false;
 	bool print_short_price = false;
 	bool print_no_header = false;
+	bool print_index = false;
 	std::string regex_pattern;
 
 	i64 min_price = 0;
@@ -71,13 +72,14 @@ int main(int argc, char** argv)
 
 	auto cli = (
 		clipp::option("--help", "-h").set(show_help) % "show help",
-		clipp::option("-u").set(update_db) % "update the database before processing the query",
-		clipp::option("-m").set(check_member_status) % "update missing members data",
-		clipp::option("-r").set(pick_random_item) % "pick a random item from results",
-		clipp::option("--f2p").set(find_f2p_items) % "look for f2p items",
+		clipp::option("--update", "-u").set(update_db) % "update the database before processing the query",
+		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
+		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
+		clipp::option("--f2p", "-f").set(find_f2p_items) % "look for f2p items",
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
+		clipp::option("--index").set(print_index) % "print the indices of items",
 		(clipp::option("--name", "-n") & clipp::value("str", name_contains)) % "filter items by name",
 		(clipp::option("--regex") & clipp::value("pattern", regex_pattern)) % "filter items by name with regex",
 		(clipp::option("--min-price") & clipp::value("price", min_price)) % "minimum price",
@@ -221,6 +223,7 @@ int main(int argc, char** argv)
 		if (sort_mode != ge::sort_mode::none)
 			ge::sort_items(filtered_items, sort_mode);
 
+		u8 index_width = 6;
 		u8 name_width = 42;
 		u8 price_width = 12;
 		u8 volume_width = 10;
@@ -231,7 +234,12 @@ int main(int argc, char** argv)
 
 		if (!print_no_header)
 		{
-			std::cout << std::left
+			std::cout << std::left;
+
+			if (print_index)
+				std::cout << std::setw(index_width) << "Index";
+
+			std::cout
 				<< std::setw(name_width) << "Name"
 				<< std::setw(price_width) << "Price"
 				<< std::setw(volume_width) << "Volume"
@@ -242,6 +250,7 @@ int main(int argc, char** argv)
 				<< "\n";
 		}
 
+		u16 index = 0;
 		auto print_item_line = [&](ge::item& item)
 		{
 			if (check_member_status)
@@ -257,6 +266,7 @@ int main(int argc, char** argv)
 			const u64 total_item_cost = item.price * item.limit;
 
 			std::cout << std::left
+				<< std::setw(print_index ? index_width : 0) << ( print_index ? std::to_string(index) : "" )
 				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
 				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
 				<< std::setw(volume_width) << item.volume
@@ -265,14 +275,18 @@ int main(int argc, char** argv)
 				<< std::setw(high_alch_width) << item.high_alch
 				<< std::setw(members_width) << ge::members_item_str.at(item.members)
 				<< "\n";
+
+			++index;
 		};
 
-		if (!invert_sort)
-			for (ge::item& item : filtered_items)
-				print_item_line(item);
-		else
-			for (ge::item& item : filtered_items | std::views::reverse)
-				print_item_line(item);
+		{
+			if (!invert_sort)
+				for (ge::item& item : filtered_items)
+					print_item_line(item);
+			else
+				for (ge::item& item : filtered_items | std::views::reverse)
+					print_item_line(item);
+		}
 	}
 
 	return 0;
