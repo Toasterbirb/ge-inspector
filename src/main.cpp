@@ -1,5 +1,6 @@
 #include "DB.hpp"
 #include "Item.hpp"
+#include "PriceUtils.hpp"
 #include "Types.hpp"
 
 #include <algorithm>
@@ -22,6 +23,7 @@ int main(int argc, char** argv)
 	bool check_member_status = false;
 	bool find_f2p_items = false;
 	bool find_profitable_to_alch_items = false;
+	bool print_short_price = false;
 
 	i64 min_price = 0;
 	i64 max_price = std::numeric_limits<i64>::max();
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
 		clipp::option("-m").set(check_member_status).doc("update missing members data"),
 		clipp::option("-r").set(pick_random_item).doc("pick a random item from results"),
 		clipp::option("--f2p").set(find_f2p_items).doc("look for f2p items"),
+		clipp::option("--short").set(print_short_price).doc("print prices in a shorter form"),
 		clipp::option("--min-price").doc("minimum price") & clipp::value("price", min_price),
 		clipp::option("--max-price").doc("maximum price") & clipp::value("price", max_price),
 		clipp::option("--min-volume").doc("minimum volume (def: 1)") & clipp::value("volume", min_volume),
@@ -171,8 +174,14 @@ int main(int argc, char** argv)
 		}
 
 		std::cout << "Item:\t\t" << item.name << '\n'
-				<< "Price:\t\t" << item.price << '\n'
-				<< "Limit:\t\t" << item.limit << '\n'
+				<< "Price:\t\t";
+
+		if (!print_short_price)
+			std::cout << item.price << '\n';
+		else
+			std::cout << ge::round_big_numbers(item.price) << '\n';
+
+		std::cout << "Limit:\t\t" << item.limit << '\n'
 				<< "Volume:\t\t" << item.volume << '\n'
 				<< "Total cost:\t" << item.limit * item.price << '\n'
 				<< "High alch:\t" << item.high_alch << '\n';
@@ -236,11 +245,22 @@ int main(int argc, char** argv)
 				return;
 
 			std::cout << std::left
-				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
-				<< std::setw(price_width) << item.price
-				<< std::setw(volume_width) << item.volume
-				<< std::setw(total_cost_width) << item.price * item.limit
-				<< std::setw(limit_width) << item.limit
+				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name;
+
+			if (!print_short_price)
+				std::cout << std::setw(price_width) << item.price;
+			else
+				std::cout << std::setw(price_width) << ge::round_big_numbers(item.price);
+
+			std::cout << std::setw(volume_width) << item.volume;
+
+			const u64 total_item_cost = item.price * item.limit;
+			if (!print_short_price)
+				std::cout << std::setw(total_cost_width) << total_item_cost;
+			else
+				std::cout << std::setw(total_cost_width) << ge::round_big_numbers(total_item_cost);
+
+			std::cout << std::setw(limit_width) << item.limit
 				<< std::setw(high_alch_width) << item.high_alch;
 
 			std::cout << std::setw(members_width);
