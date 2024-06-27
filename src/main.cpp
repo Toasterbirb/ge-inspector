@@ -245,14 +245,14 @@ int main(int argc, char** argv)
 		if (sort_mode != ge::sort_mode::none)
 			ge::sort_items(filtered_items, sort_mode);
 
-		u8 index_width = 6;
-		u8 name_width = 42;
-		u8 price_width = 12;
-		u8 volume_width = 10;
-		u8 total_cost_width = 13;
-		u8 limit_width = 10;
-		u8 high_alch_width = 12;
-		u8 members_width = 10;
+		constexpr u8 index_width = 6;
+		constexpr u8 name_width = 42;
+		constexpr u8 price_width = 12;
+		constexpr u8 volume_width = 10;
+		constexpr u8 total_cost_width = 13;
+		constexpr u8 limit_width = 10;
+		constexpr u8 high_alch_width = 12;
+		constexpr u8 members_width = 10;
 
 		if (!print_no_header)
 		{
