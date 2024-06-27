@@ -96,9 +96,12 @@ namespace ge
 			return;
 		}
 
-		// Download the latest price data
+		// Download the latest price and volume data
 		std::future<nlohmann::json> price_data_future = std::async(std::launch::async,
 				download_json, price_json_url, 0);
+
+		std::future<nlohmann::json> volume_data_future = std::async(std::launch::async,
+				download_json, volume_json_url, 0);
 
 		// There might be new items that are not yet in the database
 		std::vector<std::string> new_items;
@@ -114,6 +117,10 @@ namespace ge
 			price_data.erase("%LAST_UPDATE%");
 			price_data.erase("%LAST_UPDATE_F%");
 
+			nlohmann::json volume_data = volume_data_future.get();
+			volume_data.erase("%LAST_UPDATE%");
+			volume_data.erase("%LAST_UPDATE_F%");
+
 			assert(!db["items"].empty());
 			for (size_t i = 0; i < db["items"].size(); ++i)
 			{
@@ -121,7 +128,14 @@ namespace ge
 				assert(price_data.contains(item_name));
 
 				db["items"][i]["price"] = price_data[item_name];
+
+				if (volume_data.contains(item_name))
+					db["items"][i]["volume"] = volume_data.at(item_name);
+				else
+					db["items"][i]["volume"] = 0;
+
 				price_data.erase(item_name);
+				volume_data.erase(item_name);
 			}
 		}
 
