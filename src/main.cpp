@@ -1,4 +1,5 @@
 #include "DB.hpp"
+#include "Item.hpp"
 #include "Types.hpp"
 
 #include <algorithm>

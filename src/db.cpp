@@ -1,8 +1,7 @@
+#include "CURL.hpp"
 #include "DB.hpp"
-#include "ItemSortLambdas.hpp"
 
 #include <assert.h>
-#include <curl/curl.h>
 #include <execution>
 #include <filesystem>
 #include <format>
@@ -27,97 +26,6 @@ namespace ge
 	constexpr char high_alch_json_url[] = "https://runescape.wiki/?title=Module:GEHighAlchs/data.json&action=raw&ctype=application%2Fjson";
 
 	constexpr char item_details_json_url[] = "https://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item=";
-
-	void to_json(nlohmann::json& j, const item& i)
-	{
-		j = nlohmann::json {
-			{ "name", i.name },
-			{ "id", i.id },
-			{ "price", i.price },
-			{ "limit", i.limit },
-			{ "volume", i.volume },
-			{ "high_alch", i.high_alch },
-			{ "members", i.members }
-		};
-	}
-
-	void from_json(const nlohmann::json& j, item& i)
-	{
-		j.at("name").get_to(i.name);
-		j.at("id").get_to(i.id);
-		j.at("price").get_to(i.price);
-		j.at("limit").get_to(i.limit);
-		j.at("volume").get_to(i.volume);
-		j.at("high_alch").get_to(i.high_alch);
-		j.at("members").get_to(i.members);
-	}
-
-	static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
-	{
-		static_cast<std::string*>(userp)->append(static_cast<char*>(contents), size * nmemb);
-		return size * nmemb;
-	}
-
-	nlohmann::json download_json(const std::string& url, u8 depth)
-	{
-		CURL* curl;
-		CURLcode res;
-		std::string read_buffer;
-
-		struct curl_slist* headers = NULL;
-		curl_slist_append(headers, "accept: application/json");
-
-		curl = curl_easy_init();
-
-		if (curl)
-		{
-			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &read_buffer);
-			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "grand-exchange-inspector");
-			res = curl_easy_perform(curl);
-			curl_easy_cleanup(curl);
-
-			// Replace all non-ascii chars with underscores
-			for (size_t i = 0; i < read_buffer.size(); ++i)
-			{
-				if (read_buffer[i] < 0)
-					read_buffer[i] = '_';
-			}
-
-			// Retry up-to 3 times if the cURL buffer is empty for some reason
-			if (read_buffer.empty() && depth < 3)
-			{
-				return download_json(url, depth++);
-			}
-			else if (read_buffer.empty())
-			{
-				std::cout << "Could not download data from " << url << ". Try again later...\n";
-				exit(1);
-			}
-			else
-			{
-				try
-				{
-					return nlohmann::json::parse(read_buffer);
-				}
-				catch (nlohmann::json::exception e)
-				{
-					std::cout << "\nException happened when trying to access URL: " << url << "\n";
-					std::cout << "Error: " << e.what() << "\n";
-					exit(1);
-				}
-			}
-		}
-		else
-		{
-			std::cout << "error during curl initialization\n";
-			return nlohmann::json();
-		}
-	}
 
 	void init_db()
 	{
@@ -356,35 +264,6 @@ namespace ge
 		std::vector<item> items = DATABASE["items"];
 
 		return items;
-	}
-
-	void sort_items(std::vector<item>& items, const sort_mode mode)
-	{
-		switch (mode)
-		{
-			case ge::sort_mode::volume:
-				std::sort(items.begin(), items.end(), ge::sort_by_volume);
-				break;
-
-			case ge::sort_mode::price:
-				std::sort(items.begin(), items.end(), ge::sort_by_price);
-				break;
-
-			case ge::sort_mode::alch:
-				std::sort(items.begin(), items.end(), ge::sort_by_alch);
-				break;
-
-			case ge::sort_mode::cost:
-				std::sort(items.begin(), items.end(), ge::sort_by_total_cost);
-				break;
-
-			case ge::sort_mode::limit:
-				std::sort(items.begin(), items.end(), ge::sort_by_limit);
-				break;
-
-			case ge::sort_mode::none:
-				break;
-		}
 	}
 
 	void update_filtered_item_data(std::vector<item>& items)
