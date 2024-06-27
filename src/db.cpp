@@ -156,7 +156,7 @@ namespace ge
 	{
 		nlohmann::json& db_items = DATABASE["items"];
 		auto item_it = std::find_if(db_items.begin(), db_items.end(), [item](const nlohmann::json& json_item){
-			return json_item["name"] == item.name;
+			return json_item["id"] == item.id;
 		});
 
 		*item_it = item;
