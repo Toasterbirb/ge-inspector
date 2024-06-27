@@ -205,7 +205,7 @@ int main(int argc, char** argv)
 			ge::sort_items(filtered_items, sort_mode);
 
 		u8 name_width = 42;
-		u8 price_width = 10;
+		u8 price_width = 12;
 		u8 volume_width = 10;
 		u8 total_cost_width = 12;
 		u8 limit_width = 10;
