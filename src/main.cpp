@@ -169,6 +169,12 @@ int main(int argc, char** argv)
 	// Pick a random item from results
 	if (pick_random_item)
 	{
+		if (filtered_items.empty())
+		{
+			std::cout << "No results were found. Please try another query\n";
+			return 1;
+		}
+
 		size_t seed;
 		std::fstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
 		urandom.read(reinterpret_cast<char*>(&seed), sizeof(seed));
