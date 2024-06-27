@@ -226,12 +226,8 @@ int main(int argc, char** argv)
 
 		if (!print_no_header)
 		{
-			std::cout << std::left;
-
-			if (print_index)
-				std::cout << std::setw(index_width) << "Index";
-
-			std::cout
+			std::cout << std::left
+				<< std::setw(print_index ? index_width : 0) << ( print_index ? "Index" : "" )
 				<< std::setw(name_width) << "Name"
 				<< std::setw(price_width) << "Price"
 				<< std::setw(volume_width) << "Volume"
