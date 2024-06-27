@@ -192,44 +192,16 @@ int main(int argc, char** argv)
 				std::cout << "Reached the maximum amount of items to check. Try again with different search options\n";
 		}
 
-		std::cout << "Item:\t\t" << item.name << '\n'
-				<< "Price:\t\t";
-
-		if (!print_short_price)
-			std::cout << item.price << '\n';
-		else
-			std::cout << ge::round_big_numbers(item.price) << '\n';
-
-		std::cout << "Limit:\t\t" << item.limit << '\n'
-				<< "Volume:\t\t" << item.volume << '\n'
-				<< "Total cost:\t";
-
-		if (!print_short_price)
-			std::cout << item.limit * item.price << '\n';
-		else
-			std::cout << ge::round_big_numbers(item.limit * item.price) << '\n';
-
-		std::cout << "High alch:\t" << item.high_alch << '\n';
-
 		if (item.members == ge::members_item::unknown && check_member_status)
 			ge::update_item_member_status(item);
 
-		std::cout << "Members:\t";
-		switch (item.members)
-		{
-			case ge::members_item::yes:
-				std::cout << "yes\n";
-				break;
-
-			case ge::members_item::no:
-				std::cout << "no\n";
-				break;
-
-			case ge::members_item::no_data:
-			case ge::members_item::unknown:
-				std::cout << "unknown\n";
-				break;
-		}
+		std::cout << "Item:\t\t" << item.name << '\n'
+				<< "Price:\t\t" << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
+				<< "Limit:\t\t" << item.limit << '\n'
+				<< "Volume:\t\t" << item.volume << '\n'
+				<< "Total cost:\t" << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
+				<< "High alch:\t" << item.high_alch << '\n'
+				<< "Members:\t" << ge::members_item_str.at(item.members) << '\n';
 	}
 	// Print the results normally
 	else
@@ -253,9 +225,8 @@ int main(int argc, char** argv)
 			<< std::setw(total_cost_width) << "Total cost"
 			<< std::setw(limit_width) << "Limit"
 			<< std::setw(high_alch_width) << "High alch"
-			<< std::setw(members_width) << "Members";
-
-		std::cout << std::endl;
+			<< std::setw(members_width) << "Members"
+			<< "\n";
 
 		auto print_item_line = [&](ge::item& item)
 		{
@@ -269,43 +240,17 @@ int main(int argc, char** argv)
 			if (find_f2p_items && item.members != ge::members_item::no)
 				return;
 
-			std::cout << std::left
-				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name;
-
-			if (!print_short_price)
-				std::cout << std::setw(price_width) << item.price;
-			else
-				std::cout << std::setw(price_width) << ge::round_big_numbers(item.price);
-
-			std::cout << std::setw(volume_width) << item.volume;
-
 			const u64 total_item_cost = item.price * item.limit;
-			if (!print_short_price)
-				std::cout << std::setw(total_cost_width) << total_item_cost;
-			else
-				std::cout << std::setw(total_cost_width) << ge::round_big_numbers(total_item_cost);
 
-			std::cout << std::setw(limit_width) << item.limit
-				<< std::setw(high_alch_width) << item.high_alch;
-
-			std::cout << std::setw(members_width);
-			switch (item.members)
-			{
-				case ge::members_item::yes:
-					std::cout << "yes";
-					break;
-
-				case ge::members_item::no:
-					std::cout << "no";
-					break;
-
-				case ge::members_item::no_data:
-				case ge::members_item::unknown:
-					std::cout << "unknown";
-					break;
-			}
-
-			std::cout << "\n";
+			std::cout << std::left
+				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
+				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
+				<< std::setw(volume_width) << item.volume
+				<< std::setw(total_cost_width) << ( print_short_price ? ge::round_big_numbers(total_item_cost) : std::to_string(total_item_cost) )
+				<< std::setw(limit_width) << item.limit
+				<< std::setw(high_alch_width) << item.high_alch
+				<< std::setw(members_width) << ge::members_item_str.at(item.members)
+				<< "\n";
 		};
 
 		if (!invert_sort)

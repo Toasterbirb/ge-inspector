@@ -13,6 +13,13 @@ namespace ge
 		yes, no, unknown, no_data
 	};
 
+	const static std::unordered_map<members_item, std::string> members_item_str = {
+		{ members_item::yes, "yes" },
+		{ members_item::no, "no" },
+		{ members_item::unknown, "unknown" },
+		{ members_item::no_data, "unknown" }
+	};
+
 	struct item
 	{
 		std::string name;
