@@ -274,6 +274,20 @@ namespace ge
 	std::vector<item> load_db()
 	{
 		std::fstream db_file(db_path, std::ios::in);
+
+		if (!db_file.is_open())
+		{
+			std::cout << "No database file was found. Downloading the required data and creating a new one...\n";
+			init_db();
+
+			// Attempt to re-open the database file
+			try {
+				db_file.open(db_path, std::ios::in);
+			} catch (std::exception e) {
+				std::cout << "can't open the database file: " << e.what() << '\n';
+			}
+		}
+
 		DATABASE = nlohmann::json::parse(db_file);
 
 		std::vector<item> items = DATABASE["items"];
