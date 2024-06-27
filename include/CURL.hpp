@@ -2,7 +2,7 @@
 
 #include "Types.hpp"
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 
 namespace ge

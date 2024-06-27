@@ -14,7 +14,5 @@ using f32	= float;
 using f64	= double;
 using f128	= long double;
 
-using floatymcfloatface = float;
-
 static_assert(sizeof(f32) == sizeof(i32));
 static_assert(sizeof(f64) == sizeof(i64));

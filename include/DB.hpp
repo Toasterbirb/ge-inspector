@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Item.hpp"
 #include "Types.hpp"
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace ge
 {
+	struct item;
+
 	void init_db();
 	void update_db();
 	void update_item(const item& item);

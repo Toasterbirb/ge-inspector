@@ -1,5 +1,6 @@
 #include "CURL.hpp"
 #include "DB.hpp"
+#include "Item.hpp"
 
 #include <assert.h>
 #include <filesystem>
@@ -7,6 +8,7 @@
 #include <fstream>
 #include <future>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <ostream>
 #include <string>
 #include <vector>
