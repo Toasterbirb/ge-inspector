@@ -275,11 +275,8 @@ int main(int argc, char** argv)
 		u16 index = 0;
 		auto print_item_line = [&](ge::item& item)
 		{
-			if (check_member_status)
-			{
-				if (ge::update_item_member_status(item))
-					ge::update_filtered_item_data(filtered_items);
-			}
+			if (check_member_status && ge::update_item_member_status(item))
+				ge::update_filtered_item_data(filtered_items);
 
 			// If the f2p filter is enabled, skip members items
 			if (member_filter == member_filter::f2p && item.members != ge::members_item::no)
@@ -308,14 +305,12 @@ int main(int argc, char** argv)
 			++index;
 		};
 
-		{
-			if (!invert_sort)
-				for (ge::item& item : filtered_items)
-					print_item_line(item);
-			else
-				for (ge::item& item : filtered_items | std::views::reverse)
-					print_item_line(item);
-		}
+		if (!invert_sort)
+			for (ge::item& item : filtered_items)
+				print_item_line(item);
+		else
+			for (ge::item& item : filtered_items | std::views::reverse)
+				print_item_line(item);
 	}
 
 	return 0;
