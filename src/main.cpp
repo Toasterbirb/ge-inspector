@@ -192,8 +192,14 @@ int main(int argc, char** argv)
 
 		std::cout << "Limit:\t\t" << item.limit << '\n'
 				<< "Volume:\t\t" << item.volume << '\n'
-				<< "Total cost:\t" << item.limit * item.price << '\n'
-				<< "High alch:\t" << item.high_alch << '\n';
+				<< "Total cost:\t";
+
+		if (!print_short_price)
+			std::cout << item.limit * item.price << '\n';
+		else
+			std::cout << ge::round_big_numbers(item.limit * item.price) << '\n';
+
+		std::cout << "High alch:\t" << item.high_alch << '\n';
 
 		if (item.members == ge::members_item::unknown && check_member_status)
 			ge::update_item_member_status(item);
