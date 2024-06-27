@@ -1,3 +1,4 @@
+#include "Color.hpp"
 #include "DB.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
@@ -53,6 +54,7 @@ int main(int argc, char** argv)
 	std::string name_contains;
 
 	bool invert_sort = false;
+	ge::colorscheme colorscheme = ge::colorscheme::white;
 
 	ge::sort_mode sort_mode = ge::sort_mode::none;
 
@@ -75,6 +77,11 @@ int main(int argc, char** argv)
 	auto cli_sort_limit = (
 		clipp::command("limit").set(sort_mode, ge::sort_mode::limit) % "sort by buy limit"
 	);
+
+	// Generate the colorscheme option list
+	clipp::group colorscheme_commands;
+	for (const auto& color : ge::colorschemes)
+		colorscheme_commands.push_back(clipp::command(color.second.first).set(colorscheme, color.first));
 
 	auto cli = (
 		clipp::option("--help", "-h").set(show_help) % "show help",
@@ -100,7 +107,8 @@ int main(int argc, char** argv)
 		(clipp::option("--min-cost") & clipp::value("cost", min_cost)) % "minimum cost of the flip",
 		(clipp::option("--budget", "-b") & clipp::value("budget", budget)) % "maximum budget for total cost",
 		(clipp::option("--sort", "-s") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit)) % "sort the results",
-		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order"
+		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order",
+		(clipp::option("--color", "-c") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
 	);
 
 	if (!clipp::parse(argc, argv, cli))
@@ -238,13 +246,17 @@ int main(int argc, char** argv)
 		if (item.members == ge::members_item::unknown && check_member_status)
 			ge::update_item_member_status(item);
 
-		std::cout << "Item:\t\t" << item.name << '\n'
+		std::cout
+				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
+				<< "Item:\t\t" << item.name << '\n'
 				<< "Price:\t\t" << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
 				<< "Limit:\t\t" << item.limit << '\n'
 				<< "Volume:\t\t" << item.volume << '\n'
 				<< "Total cost:\t" << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
 				<< "High alch:\t" << item.high_alch << '\n'
-				<< "Members:\t" << ge::members_item_str.at(item.members) << '\n';
+				<< "Members:\t" << ge::members_item_str.at(item.members)
+				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
+				<< '\n';
 	}
 	// Print the results normally
 	else
@@ -299,7 +311,9 @@ int main(int argc, char** argv)
 
 			const u64 total_item_cost = item.price * item.limit;
 
-			std::cout << std::left
+			std::cout
+				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
+				<< std::left
 				<< std::setw(print_index ? index_width : 0) << ( print_index ? std::to_string(index) : "" )
 				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
 				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
@@ -308,7 +322,8 @@ int main(int argc, char** argv)
 				<< std::setw(limit_width) << item.limit
 				<< std::setw(high_alch_width) << item.high_alch
 				<< std::setw(members_width) << ge::members_item_str.at(item.members)
-				<< "\n";
+				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
+				<< '\n';
 
 			++index;
 		};
