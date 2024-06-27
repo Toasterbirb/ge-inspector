@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
 		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
-		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit),
+		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit).doc("sorting modes"),
 		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order"),
 		clipp::option("--short").set(print_short_price).doc("print prices in a shorter form"),
 		clipp::option("--no-header").set(print_no_header).doc("don't print the header row")
