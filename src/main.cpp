@@ -50,48 +50,48 @@ int main(int argc, char** argv)
 	ge::sort_mode sort_mode = ge::sort_mode::none;
 
 	auto cli_sort_volume = (
-		clipp::command("volume").set(sort_mode, ge::sort_mode::volume).doc("sort by volume")
+		clipp::command("volume").set(sort_mode, ge::sort_mode::volume) % "sort by volume"
 	);
 
 	auto cli_sort_price = (
-		clipp::command("price").set(sort_mode, ge::sort_mode::price).doc("sort by price")
+		clipp::command("price").set(sort_mode, ge::sort_mode::price) % "sort by price"
 	);
 
 	auto cli_sort_alch = (
-		clipp::command("alch").set(sort_mode, ge::sort_mode::alch).doc("sort by the high alchemy price")
+		clipp::command("alch").set(sort_mode, ge::sort_mode::alch) % "sort by the high alchemy price"
 	);
 
 	auto cli_sort_cost = (
-		clipp::command("cost").set(sort_mode, ge::sort_mode::cost).doc("sort by total cost")
+		clipp::command("cost").set(sort_mode, ge::sort_mode::cost) % "sort by total cost"
 	);
 
 	auto cli_sort_limit = (
-		clipp::command("limit").set(sort_mode, ge::sort_mode::limit).doc("sort by buy limit")
+		clipp::command("limit").set(sort_mode, ge::sort_mode::limit) % "sort by buy limit"
 	);
 
 	auto cli = (
-		clipp::option("--help", "-h").set(show_help).doc("show help"),
-		clipp::option("-u").set(update_db).doc("update the database before processing the query"),
-		clipp::option("-m").set(check_member_status).doc("update missing members data"),
-		clipp::option("-r").set(pick_random_item).doc("pick a random item from results"),
-		clipp::option("--f2p").set(find_f2p_items).doc("look for f2p items"),
-		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
-		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
-		clipp::option("--min-price").doc("minimum price") & clipp::value("price", min_price),
-		clipp::option("--max-price").doc("maximum price") & clipp::value("price", max_price),
-		clipp::option("--min-volume").doc("minimum volume (def: 1)") & clipp::value("volume", min_volume),
-		clipp::option("--max-volume").doc("maximum volume") & clipp::value("volume", max_volume),
-		clipp::option("--min-limit").doc("minimum buy limit") & clipp::value("limit", min_limit),
-		clipp::option("--max-limit").doc("maximum buy limit") & clipp::value("limit", max_limit),
-		clipp::option("--min-alch").doc("minimum high alchemy amount") & clipp::value("alch", min_alch),
-		clipp::option("--max-alch").doc("maximum high alchemy amount") & clipp::value("alch", max_alch),
-		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
-		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
-		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
-		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit).doc("sorting modes"),
-		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order"),
-		clipp::option("--short").set(print_short_price).doc("print prices in a shorter form"),
-		clipp::option("--no-header").set(print_no_header).doc("don't print the header row")
+		clipp::option("--help", "-h").set(show_help) % "show help",
+		clipp::option("-u").set(update_db) % "update the database before processing the query",
+		clipp::option("-m").set(check_member_status) % "update missing members data",
+		clipp::option("-r").set(pick_random_item) % "pick a random item from results",
+		clipp::option("--f2p").set(find_f2p_items) % "look for f2p items",
+		clipp::option("--profitable-alch").set(find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
+		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
+		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
+		(clipp::option("--name", "-n") & clipp::value("str", name_contains)) % "filter items by name",
+		(clipp::option("--regex") & clipp::value("pattern", regex_pattern)) % "filter items by name with regex",
+		(clipp::option("--min-price") & clipp::value("price", min_price)) % "minimum price",
+		(clipp::option("--max-price") & clipp::value("price", max_price)) % "maximum price",
+		(clipp::option("--min-volume") & clipp::value("volume", min_volume)) % "minimum volume (def: 1)",
+		(clipp::option("--max-volume") & clipp::value("volume", max_volume)) % "maximum volume",
+		(clipp::option("--min-limit") & clipp::value("limit", min_limit)) % "minimum buy limit",
+		(clipp::option("--max-limit") & clipp::value("limit", max_limit)) % "maximum buy limit",
+		(clipp::option("--min-alch") & clipp::value("alch", min_alch)) % "minimum high alchemy amount",
+		(clipp::option("--max-alch") & clipp::value("alch", max_alch)) % "maximum high alchemy amount",
+		(clipp::option("--min-cost") & clipp::value("cost", min_cost)) % "minimum cost of the flip",
+		(clipp::option("--budget", "-b") & clipp::value("budget", budget)) % "maximum budget for total cost",
+		(clipp::option("--sort", "-s") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit)) % "sort the results",
+		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order"
 	);
 
 	if (!clipp::parse(argc, argv, cli))
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
 	if (show_help)
 	{
-		auto fmt = clipp::doc_formatting{}.doc_column(30);
+		auto fmt = clipp::doc_formatting{}.doc_column(40);
 
 		std::cout << clipp::make_man_page(cli, "ge-inspector", fmt);
 		return 0;
