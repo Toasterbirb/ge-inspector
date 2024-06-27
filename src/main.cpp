@@ -35,6 +35,9 @@ int main(int argc, char** argv)
 	i64 min_limit = 0;
 	i64 max_limit = std::numeric_limits<i64>::max();
 
+	i64 min_alch = 0;
+	i64 max_alch = std::numeric_limits<i64>::max();
+
 	i64 min_cost = 0;
 
 	std::string name_contains;
@@ -76,6 +79,8 @@ int main(int argc, char** argv)
 		clipp::option("--max-volume").doc("maximum volume") & clipp::value("volume", max_volume),
 		clipp::option("--min-limit").doc("minimum buy limit") & clipp::value("limit", min_limit),
 		clipp::option("--max-limit").doc("maximum buy limit") & clipp::value("limit", max_limit),
+		clipp::option("--min-alch").doc("minimum high alchemy amount") & clipp::value("alch", min_alch),
+		clipp::option("--max-alch").doc("maximum high alchemy amount") & clipp::value("alch", max_alch),
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
 		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
 		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
@@ -112,7 +117,9 @@ int main(int argc, char** argv)
 					&& item.volume >= min_volume
 					&& item.volume <= max_volume
 					&& item.limit >= min_limit
-					&& item.limit <= max_limit;
+					&& item.limit <= max_limit
+					&& item.high_alch >= min_alch
+					&& item.high_alch <= max_alch;
 
 		bool name_filter = name_contains.empty();
 		if (!name_contains.empty())
