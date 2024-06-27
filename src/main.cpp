@@ -75,7 +75,8 @@ int main(int argc, char** argv)
 		clipp::option("-m").set(check_member_status).doc("update missing members data"),
 		clipp::option("-r").set(pick_random_item).doc("pick a random item from results"),
 		clipp::option("--f2p").set(find_f2p_items).doc("look for f2p items"),
-		clipp::option("--short").set(print_short_price).doc("print prices in a shorter form"),
+		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
+		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
 		clipp::option("--min-price").doc("minimum price") & clipp::value("price", min_price),
 		clipp::option("--max-price").doc("maximum price") & clipp::value("price", max_price),
 		clipp::option("--min-volume").doc("minimum volume (def: 1)") & clipp::value("volume", min_volume),
@@ -85,12 +86,11 @@ int main(int argc, char** argv)
 		clipp::option("--min-alch").doc("minimum high alchemy amount") & clipp::value("alch", min_alch),
 		clipp::option("--max-alch").doc("maximum high alchemy amount") & clipp::value("alch", max_alch),
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items).doc("find items that are profitable to alch with high alchemy"),
-		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
-		clipp::option("--name", "-n").doc("filter items by name") & clipp::value("str", name_contains),
-		clipp::option("--regex").doc("filter items by name with regex") & clipp::value("regex", regex_pattern),
 		clipp::option("--min-cost").doc("minimum cost of the flip") & clipp::value("cost", min_cost),
+		clipp::option("--budget", "-b").doc("maximum budget for total cost") & clipp::value("budget", budget),
 		clipp::option("--sort", "-s").doc("sort the results") & (cli_sort_volume | cli_sort_price | cli_sort_alch | cli_sort_cost | cli_sort_limit),
 		clipp::option("--invert", "-i").set(invert_sort).doc("invert the result order"),
+		clipp::option("--short").set(print_short_price).doc("print prices in a shorter form"),
 		clipp::option("--no-header").set(print_no_header).doc("don't print the header row")
 	);
 
