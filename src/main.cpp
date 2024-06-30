@@ -15,12 +15,18 @@
 #include <ranges>
 #include <regex>
 
+std::vector<std::string> tokenize_string(const std::string& line, const char separator);
+
 int main(int argc, char** argv)
 {
 	struct range
 	{
 		i64 min = 0;
 		i64 max = std::numeric_limits<i64>::max();
+
+		__attribute__((warn_unused_result))
+		bool is_min_set() const { return min > 1; }
+		bool is_max_set() const { return max < std::numeric_limits<i64>::max(); }
 	};
 
 	ge::members_item member_filter = ge::members_item::unknown;
@@ -42,6 +48,7 @@ int main(int argc, char** argv)
 	volume.min = 1;
 
 	std::string name_contains;
+	std::string pre_filter_item_names;
 
 	bool invert_sort = false;
 	ge::colorscheme colorscheme = ge::colorscheme::white;
@@ -70,6 +77,7 @@ int main(int argc, char** argv)
 		clipp::option("--index").set(print_index) % "print the indices of items",
 		(clipp::option("--name", "-n") & clipp::value("str", name_contains)) % "filter items by name",
 		(clipp::option("--regex") & clipp::value("pattern", regex_pattern)) % "filter items by name with regex",
+		(clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'",
 		(clipp::option("--min-price") & clipp::value("price", price.min)) % "minimum price",
 		(clipp::option("--max-price") & clipp::value("price", price.max)) % "maximum price",
 		(clipp::option("--min-volume") & clipp::value("volume", volume.min)) % "minimum volume (def: 1)",
@@ -111,6 +119,51 @@ int main(int argc, char** argv)
 	// Check the cost of a nature rune (we are assuming that a fire battlestaff is used)
 	// This variable is only really used if we are checking for alching profitability
 	u64 nature_rune_cost = find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
+
+	// Set values based on pre-filtering
+	// However don't change user-defined values
+	{
+		std::vector<std::string> item_names = tokenize_string(pre_filter_item_names, ';');
+
+		// Determine the min and max values from the given items
+		std::vector<ge::item> pre_filtered_items;
+		for (const std::string& pre_filter_item_name : item_names)
+		{
+			std::copy_if(items.begin(), items.end(), std::back_inserter(pre_filtered_items), [pre_filter_item_name](const ge::item& item){
+				return pre_filter_item_name == item.name;
+			});
+		}
+
+		range pre_price { std::numeric_limits<i64>::max(), 0 };
+		range pre_volume { std::numeric_limits<i64>::max(), 0 };
+		range pre_limit { std::numeric_limits<i64>::max(), 0 };
+
+		const auto set_min_max_to_range = [](range& range, const i64& value)
+		{
+			if (value < range.min)
+				range.min = value;
+
+			if (value > range.max)
+				range.max = value;
+		};
+
+		for (const ge::item& item : pre_filtered_items)
+		{
+			set_min_max_to_range(pre_price, item.price);
+			set_min_max_to_range(pre_volume, item.volume);
+			set_min_max_to_range(pre_limit, item.limit);
+		}
+
+		const auto apply_ranges_not_changed_by_user = [](const range src, range& dst)
+		{
+			dst.min = dst.is_min_set() ? dst.min : src.min;
+			dst.max = dst.is_max_set() ? dst.max : src.max;
+		};
+
+		apply_ranges_not_changed_by_user(pre_price, price);
+		apply_ranges_not_changed_by_user(pre_volume, volume);
+		apply_ranges_not_changed_by_user(pre_limit, limit);
+	}
 
 	// Run the query
 	std::vector<ge::item> filtered_items;
@@ -276,4 +329,18 @@ int main(int argc, char** argv)
 	}
 
 	return 0;
+}
+
+// Function stolen from subst
+std::vector<std::string> tokenize_string(const std::string& line, const char separator)
+{
+	std::vector<std::string> tokens;
+
+	std::istringstream line_stream(line);
+	std::string token;
+
+	while (std::getline(line_stream, token, separator))
+		tokens.push_back(token);
+
+	return tokens;
 }
