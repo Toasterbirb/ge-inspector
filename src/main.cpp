@@ -122,6 +122,7 @@ int main(int argc, char** argv)
 
 	// Set values based on pre-filtering
 	// However don't change user-defined values
+	if (!pre_filter_item_names.empty())
 	{
 		std::vector<std::string> item_names = tokenize_string(pre_filter_item_names, ';');
 
