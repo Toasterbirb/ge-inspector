@@ -39,6 +39,7 @@ int main(int argc, char** argv)
 	bool print_short_price = false;
 	bool print_no_header = false;
 	bool print_index = false;
+	bool print_terse_format = false;
 	std::string regex_pattern;
 
 	// Filtering ranges
@@ -68,7 +69,8 @@ int main(int argc, char** argv)
 		clipp::option("--help", "-h").set(show_help) % "show help",
 		clipp::option("--update", "-u").set(update_db) % "update the database before processing the query",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
-		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
+		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
+		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
 		clipp::option("--profitable-alch").set(find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
@@ -250,15 +252,22 @@ int main(int argc, char** argv)
 		if (item.members == ge::members_item::unknown && check_member_status)
 			ge::update_item_member_status(item);
 
+		constexpr u32 normal_info_column_width = 14;
+		const std::string separator = print_terse_format ? ";" : ":";
+
+		// Set the info column width to zero if printing in terse format
+		const u32 info_column_width = print_terse_format ? 0 : normal_info_column_width;
+
 		std::cout
+				<< std::left
 				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
-				<< "Item:\t\t" << item.name << '\n'
-				<< "Price:\t\t" << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
-				<< "Limit:\t\t" << item.limit << '\n'
-				<< "Volume:\t\t" << item.volume << '\n'
-				<< "Total cost:\t" << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
-				<< "High alch:\t" << item.high_alch << '\n'
-				<< "Members:\t" << ge::members_item_str.at(item.members)
+				<< std::setw(info_column_width) << "Item" + separator << item.name << '\n'
+				<< std::setw(info_column_width) << "Price" + separator << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
+				<< std::setw(info_column_width) << "Limit" + separator << item.limit << '\n'
+				<< std::setw(info_column_width) << "Volume" + separator << item.volume << '\n'
+				<< std::setw(info_column_width) << "Total cost" + separator << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
+				<< std::setw(info_column_width) << "High alch" + separator << item.high_alch << '\n'
+				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
 				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
 				<< '\n';
 	}
