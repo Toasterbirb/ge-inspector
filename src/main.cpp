@@ -32,6 +32,7 @@ int main(int argc, char** argv)
 	ge::members_item member_filter = ge::members_item::unknown;
 
 	bool update_db = false;
+	bool quiet_db_update = false;
 	bool show_help = false;
 	bool pick_random_item = false;
 	bool check_member_status = false;
@@ -67,7 +68,8 @@ int main(int argc, char** argv)
 
 	auto cli = (
 		clipp::option("--help", "-h").set(show_help) % "show help",
-		clipp::option("--update", "-u").set(update_db) % "update the database before processing the query",
+		(clipp::option("--update", "-u").set(update_db) % "update the database before processing the query"
+		 & clipp::option("--quiet", "-q").set(quiet_db_update) % "only update the db and don't print out any results"),
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
 		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
@@ -115,6 +117,10 @@ int main(int argc, char** argv)
 
 	if (update_db)
 		ge::update_db();
+
+	// Quit early if only a DB update was requested
+	if (quiet_db_update)
+		return 0;
 
 	std::vector<ge::item> items = ge::load_db();
 
