@@ -24,6 +24,9 @@ Rune throwing axe                         587         2450      587000       100
 For more usage information, check `ge-inspector --help`
 
 ## Building
+Dependencies:
+- curl (with development headers)
+
 Build the project with cmake by running the following commands
 ```sh
 mkdir build
