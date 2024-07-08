@@ -3,12 +3,11 @@
 #include "Filtering.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
+#include "Random.hpp"
 #include "Types.hpp"
 
 #include <algorithm>
 #include <clipp.h>
-#include <ctime>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -167,10 +166,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		size_t seed;
-		std::fstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
-		urandom.read(reinterpret_cast<char*>(&seed), sizeof(seed));
-		srand(seed);
+		srand(ge::random_seed());
 
 		ge::item item = filtered_items.at(rand() % filtered_items.size());
 
