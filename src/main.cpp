@@ -1,11 +1,11 @@
 #include "Color.hpp"
 #include "DB.hpp"
+#include "Filtering.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
 #include "Types.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <clipp.h>
 #include <ctime>
 #include <fstream>
@@ -13,22 +13,11 @@
 #include <iostream>
 #include <limits>
 #include <ranges>
-#include <regex>
 
 std::vector<std::string> tokenize_string(const std::string& line, const char separator);
 
 int main(int argc, char** argv)
 {
-	struct range
-	{
-		i64 min = 0;
-		i64 max = std::numeric_limits<i64>::max();
-
-		__attribute__((warn_unused_result))
-		bool is_min_set() const { return min > 1; }
-		bool is_max_set() const { return max < std::numeric_limits<i64>::max(); }
-	};
-
 	ge::members_item member_filter = ge::members_item::unknown;
 
 	bool update_db = false;
@@ -36,20 +25,16 @@ int main(int argc, char** argv)
 	bool show_help = false;
 	bool pick_random_item = false;
 	bool check_member_status = false;
-	bool find_profitable_to_alch_items = false;
 	bool print_short_price = false;
 	bool print_no_header = false;
 	bool print_index = false;
 	bool print_terse_format = false;
-	std::string regex_pattern;
 
-	// Filtering ranges
-	range price, volume, limit, alch, cost;
+	ge::filter filter;
 
 	// Set default range values
-	volume.min = 1;
+	filter.volume.min = 1;
 
-	std::string name_contains;
 	std::string pre_filter_item_names;
 
 	bool invert_sort = false;
@@ -75,23 +60,23 @@ int main(int argc, char** argv)
 		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
-		clipp::option("--profitable-alch").set(find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
+		clipp::option("--profitable-alch").set(filter.find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
 		clipp::option("--index").set(print_index) % "print the indices of items",
-		(clipp::option("--name", "-n") & clipp::value("str", name_contains)) % "filter items by name",
-		(clipp::option("--regex") & clipp::value("pattern", regex_pattern)) % "filter items by name with regex",
+		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)) % "filter items by name",
+		(clipp::option("--regex") & clipp::value("pattern", filter.regex_pattern)) % "filter items by name with regex",
 		(clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'",
-		(clipp::option("--min-price") & clipp::value("price", price.min)) % "minimum price",
-		(clipp::option("--max-price") & clipp::value("price", price.max)) % "maximum price",
-		(clipp::option("--min-volume") & clipp::value("volume", volume.min)) % "minimum volume (def: 1)",
-		(clipp::option("--max-volume") & clipp::value("volume", volume.max)) % "maximum volume",
-		(clipp::option("--min-limit") & clipp::value("limit", limit.min)) % "minimum buy limit",
-		(clipp::option("--max-limit") & clipp::value("limit", limit.max)) % "maximum buy limit",
-		(clipp::option("--min-alch") & clipp::value("alch", alch.min)) % "minimum high alchemy amount",
-		(clipp::option("--max-alch") & clipp::value("alch", alch.max)) % "maximum high alchemy amount",
-		(clipp::option("--min-cost") & clipp::value("cost", cost.min)) % "minimum cost of the flip",
-		(clipp::option("--budget", "-b", "--max-cost") & clipp::value("budget", cost.max)) % "maximum budget for total cost",
+		(clipp::option("--min-price") & clipp::value("price", filter.price.min)) % "minimum price",
+		(clipp::option("--max-price") & clipp::value("price", filter.price.max)) % "maximum price",
+		(clipp::option("--min-volume") & clipp::value("volume", filter.volume.min)) % "minimum volume (def: 1)",
+		(clipp::option("--max-volume") & clipp::value("volume", filter.volume.max)) % "maximum volume",
+		(clipp::option("--min-limit") & clipp::value("limit", filter.limit.min)) % "minimum buy limit",
+		(clipp::option("--max-limit") & clipp::value("limit", filter.limit.max)) % "maximum buy limit",
+		(clipp::option("--min-alch") & clipp::value("alch", filter.alch.min)) % "minimum high alchemy amount",
+		(clipp::option("--max-alch") & clipp::value("alch", filter.alch.max)) % "maximum high alchemy amount",
+		(clipp::option("--min-cost") & clipp::value("cost", filter.cost.min)) % "minimum cost of the flip",
+		(clipp::option("--budget", "-b", "--max-cost") & clipp::value("budget", filter.cost.max)) % "maximum budget for total cost",
 		(clipp::option("--sort", "-s") & clipp::one_of(sorting_mode_commands)) % "sort the results",
 		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order",
 		(clipp::option("--color", "-c") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
@@ -124,10 +109,6 @@ int main(int argc, char** argv)
 
 	std::vector<ge::item> items = ge::load_db();
 
-	// Check the cost of a nature rune (we are assuming that a fire battlestaff is used)
-	// This variable is only really used if we are checking for alching profitability
-	u64 nature_rune_cost = find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
-
 	// Set values based on pre-filtering
 	// However don't change user-defined values
 	if (!pre_filter_item_names.empty())
@@ -143,11 +124,11 @@ int main(int argc, char** argv)
 			});
 		}
 
-		range pre_price { std::numeric_limits<i64>::max(), 0 };
-		range pre_volume { std::numeric_limits<i64>::max(), 0 };
-		range pre_limit { std::numeric_limits<i64>::max(), 0 };
+		ge::range pre_price { std::numeric_limits<i64>::max(), 0 };
+		ge::range pre_volume { std::numeric_limits<i64>::max(), 0 };
+		ge::range pre_limit { std::numeric_limits<i64>::max(), 0 };
 
-		const auto set_min_max_to_range = [](range& range, const i64& value)
+		const auto set_min_max_to_range = [](ge::range& range, const i64& value)
 		{
 			if (value < range.min)
 				range.min = value;
@@ -163,53 +144,19 @@ int main(int argc, char** argv)
 			set_min_max_to_range(pre_limit, item.limit);
 		}
 
-		const auto apply_ranges_not_changed_by_user = [](const range src, range& dst)
+		const auto apply_ranges_not_changed_by_user = [](const ge::range src, ge::range& dst)
 		{
 			dst.min = dst.is_min_set() ? dst.min : src.min;
 			dst.max = dst.is_max_set() ? dst.max : src.max;
 		};
 
-		apply_ranges_not_changed_by_user(pre_price, price);
-		apply_ranges_not_changed_by_user(pre_volume, volume);
-		apply_ranges_not_changed_by_user(pre_limit, limit);
+		apply_ranges_not_changed_by_user(pre_price, filter.price);
+		apply_ranges_not_changed_by_user(pre_volume, filter.volume);
+		apply_ranges_not_changed_by_user(pre_limit, filter.limit);
 	}
 
 	// Run the query
-	std::vector<ge::item> filtered_items;
-	std::copy_if(items.begin(), items.end(), std::back_inserter(filtered_items), [&](const ge::item& item){
-		bool generic_filters = item.price >= price.min
-					&& item.price <= price.max
-					&& (item.price * item.limit) <= cost.max
-					&& (item.price * item.limit) >= cost.min
-					&& item.volume >= volume.min
-					&& item.volume <= volume.max
-					&& item.limit >= limit.min
-					&& item.limit <= limit.max
-					&& item.high_alch >= alch.min
-					&& item.high_alch <= alch.max;
-
-		bool name_filter = name_contains.empty();
-		if (!name_contains.empty())
-		{
-			// Convert everything to lowercase before doing the comparisons
-			std::string lowercase_name;
-
-			std::transform(item.name.begin(), item.name.end(), std::back_inserter(lowercase_name), [](unsigned char c) {
-				return std::tolower(c);
-			});
-
-			std::transform(name_contains.begin(), name_contains.end(), name_contains.begin(), [](unsigned char c) {
-				return std::tolower(c);
-			});
-
-			name_filter = lowercase_name.find(name_contains) != std::string::npos;
-		}
-
-		bool regex_match = regex_pattern.empty() ? true : std::regex_match(item.name, std::regex(regex_pattern));
-		bool profitable_to_alch = find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
-
-		return generic_filters && name_filter && regex_match && profitable_to_alch;
-	});
+	std::vector<ge::item> filtered_items = ge::filter_items(items, filter);
 
 	// Pick a random item from results
 	if (pick_random_item)
