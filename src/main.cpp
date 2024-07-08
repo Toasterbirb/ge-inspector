@@ -28,6 +28,7 @@ int main(int argc, char** argv)
 	bool print_no_header = false;
 	bool print_index = false;
 	bool print_terse_format = false;
+	bool print_category_list = false;
 
 	ge::filter filter;
 
@@ -54,6 +55,7 @@ int main(int argc, char** argv)
 		clipp::option("--help", "-h").set(show_help) % "show help",
 		(clipp::option("--update", "-u").set(update_db) % "update the database before processing the query"
 		 & clipp::option("--quiet", "-q").set(quiet_db_update) % "only update the db and don't print out any results"),
+		clipp::option("--list-categories").set(print_category_list) % "list all of the item categories",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
 		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
@@ -66,6 +68,7 @@ int main(int argc, char** argv)
 		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)) % "filter items by name",
 		(clipp::option("--regex") & clipp::value("pattern", filter.regex_pattern)) % "filter items by name with regex",
 		(clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'",
+		(clipp::option("--category", "-c") & clipp::value("category", filter.category)) % "filter items by category (see categories with --list-categories)",
 		(clipp::option("--min-price") & clipp::value("price", filter.price.min)) % "minimum price",
 		(clipp::option("--max-price") & clipp::value("price", filter.price.max)) % "maximum price",
 		(clipp::option("--min-volume") & clipp::value("volume", filter.volume.min)) % "minimum volume (def: 1)",
@@ -105,6 +108,12 @@ int main(int argc, char** argv)
 	// Quit early if only a DB update was requested
 	if (quiet_db_update)
 		return 0;
+
+	if (print_category_list)
+	{
+		ge::list_categories();
+		return 0;
+	}
 
 	std::vector<ge::item> items = ge::load_db();
 

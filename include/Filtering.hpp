@@ -25,9 +25,11 @@ namespace ge
 	{
 		// Filtering ranges
 		range price, volume, limit, alch, cost;
+
 		bool find_profitable_to_alch_items = false;
 		std::string name_contains;
 		std::string regex_pattern;
+		u8 category = ge::item_categories.at("All");
 	};
 
 	std::vector<item> filter_items(const std::vector<item>& items, filter filter);

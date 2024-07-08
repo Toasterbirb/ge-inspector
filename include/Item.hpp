@@ -31,6 +31,7 @@ namespace ge
 		i64 volume{};
 		i32 high_alch{};
 		members_item members = members_item::unknown;
+		u8 category = -1;
 	};
 
 	const static std::unordered_map<std::string, u8> item_categories = {
@@ -81,8 +82,12 @@ namespace ge
 		{ "Firemaking products", 40 },
 		{ "Archaeology materials", 41 },
 		{ "Wood spirits", 42 },
-		{ "Necromancy armour", 43 }
+		{ "Necromancy armour", 43 },
+		{ "All", 254 },
+		{ "Unknown", 255 },
 	};
+
+	void list_categories();
 
 	enum class sort_mode
 	{

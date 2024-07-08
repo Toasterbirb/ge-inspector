@@ -239,6 +239,8 @@ namespace ge
 						else
 							(*item_it)["members"] = ge::members_item::no;
 
+						(*item_it)["category"] = category_id;
+
 						// Update the item we were looking for originally (if it was found)
 						if ((*item_it)["id"] == item.id)
 						{

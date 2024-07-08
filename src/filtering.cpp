@@ -12,6 +12,8 @@ namespace ge
 		// This variable is only really used if we are checking for alching profitability
 		u64 nature_rune_cost = filter.find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
 
+		static const u8 all_category_id = ge::item_categories.at("All");
+
 		std::vector<item> result;
 
 		std::copy_if(items.begin(), items.end(), std::back_inserter(result), [&](const ge::item& item){
@@ -46,7 +48,11 @@ namespace ge
 			bool regex_match = filter.regex_pattern.empty() ? true : std::regex_match(item.name, std::regex(filter.regex_pattern));
 			bool profitable_to_alch = filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
 
-			return generic_filters && name_filter && regex_match && profitable_to_alch;
+			bool category_match = filter.category == all_category_id
+				? true
+				: filter.category == item.category;
+
+			return generic_filters && name_filter && regex_match && profitable_to_alch && category_match;
 		});
 
 		return result;
