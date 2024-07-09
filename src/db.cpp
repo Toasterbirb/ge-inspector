@@ -49,11 +49,11 @@ namespace ge
 
 		// Process the data
 		{
-			nlohmann::json price_data = price_data_future.get();
-			nlohmann::json id_data = id_data_future.get();
-			nlohmann::json limit_data = limit_data_future.get();
-			nlohmann::json volume_data = volume_data_future.get();
-			nlohmann::json high_alch_data = high_alch_data_future.get();
+			const nlohmann::json price_data = price_data_future.get();
+			const nlohmann::json id_data = id_data_future.get();
+			const nlohmann::json limit_data = limit_data_future.get();
+			const nlohmann::json volume_data = volume_data_future.get();
+			const nlohmann::json high_alch_data = high_alch_data_future.get();
 
 			// Skip the first two values since they are useless
 			auto json_begin = price_data.begin();
@@ -155,7 +155,7 @@ namespace ge
 	void update_item(const item& item)
 	{
 		nlohmann::json& db_items = DATABASE["items"];
-		auto item_it = std::find_if(db_items.begin(), db_items.end(), [item](const nlohmann::json& json_item){
+		const auto item_it = std::find_if(db_items.begin(), db_items.end(), [item](const nlohmann::json& json_item){
 			return json_item["id"] == item.id;
 		});
 
@@ -260,7 +260,7 @@ namespace ge
 			item.members = ge::members_item::no_data;
 
 			// Find the item in the database and update its information
-			auto item_it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [item](const nlohmann::json& json_item){
+			const auto item_it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [item](const nlohmann::json& json_item){
 				return json_item["id"] == item.id;
 			});
 
@@ -285,14 +285,14 @@ namespace ge
 			// Attempt to re-open the database file
 			try {
 				db_file.open(db_path, std::ios::in);
-			} catch (std::exception e) {
+			} catch (const std::exception& e) {
 				std::cout << "can't open the database file: " << e.what() << '\n';
 			}
 		}
 
 		DATABASE = nlohmann::json::parse(db_file);
 
-		std::vector<item> items = DATABASE["items"];
+		const std::vector<item> items = DATABASE["items"];
 
 		return items;
 	}
@@ -321,7 +321,7 @@ namespace ge
 	u64 item_cost(const std::string& name)
 	{
 		// Find the item in the database
-		auto it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [&name](const nlohmann::json& json_item){
+		const auto it = std::find_if(DATABASE["items"].begin(), DATABASE["items"].end(), [&name](const nlohmann::json& json_item){
 			return json_item["name"] == name;
 		});
 
