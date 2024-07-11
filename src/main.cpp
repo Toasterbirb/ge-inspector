@@ -222,7 +222,7 @@ int main(int argc, char** argv)
 				<< std::setw(info_column_width) << "Item" + separator << item.name << '\n'
 				<< std::setw(info_column_width) << "Price" + separator << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
 				<< std::setw(info_column_width) << "Limit" + separator << item.limit << '\n'
-				<< std::setw(info_column_width) << "Volume" + separator << item.volume << '\n'
+				<< std::setw(info_column_width) << "Volume" + separator << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) ) << '\n'
 				<< std::setw(info_column_width) << "Total cost" + separator << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
 				<< std::setw(info_column_width) << "High alch" + separator << item.high_alch << '\n'
 				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
@@ -277,7 +277,7 @@ int main(int argc, char** argv)
 				<< std::setw(print_index ? index_width : 0) << ( print_index ? std::to_string(index) : "" )
 				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
 				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
-				<< std::setw(volume_width) << item.volume
+				<< std::setw(volume_width) << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) )
 				<< std::setw(total_cost_width) << ( print_short_price ? ge::round_big_numbers(total_item_cost) : std::to_string(total_item_cost) )
 				<< std::setw(limit_width) << item.limit
 				<< std::setw(high_alch_width) << item.high_alch
