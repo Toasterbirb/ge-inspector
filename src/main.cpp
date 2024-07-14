@@ -51,6 +51,17 @@ int main(int argc, char** argv)
 	for (const auto& color : ge::colorschemes)
 		colorscheme_commands.push_back(clipp::command(color.second.first).set(colorscheme, color.first));
 
+	std::pair<std::string, std::string> ratio_stat_str;
+	std::string ratio_help_str =
+		"compare the ratios of different statistics and filter out items that have a ratio of equal or lower than the one stated (true if stat_a >= stat_b * ratio)\n\navailable stats to compare: "
+		+ []() -> std::string {
+			std::string stats;
+			for (const auto& [name, stat] : ge::str_to_stat)
+				stats += name + ' ';
+			return stats;
+		}()
+		+ '\n';
+
 	auto cli = (
 		clipp::option("--help", "-h").set(show_help) % "show help",
 		(clipp::option("--update", "-u").set(update_db) % "update the database before processing the query"
@@ -62,6 +73,8 @@ int main(int argc, char** argv)
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
 		clipp::option("--profitable-alch").set(filter.find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
+		clipp::option("--volume-over-limit").set(filter.volume_over_limit) % "find items with trade volume higher than their buy limit",
+		(clipp::option("--stat-ratio") & clipp::value("stat_a", ratio_stat_str.first) & clipp::value("stat_b", ratio_stat_str.second) & clipp::value("ratio", filter.stat_ratio)) % ratio_help_str,
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
 		clipp::option("--index").set(print_index) % "print the indices of items",
@@ -113,6 +126,28 @@ int main(int argc, char** argv)
 	{
 		ge::list_categories();
 		return 0;
+	}
+
+	// Process ratio stat names
+	if (!ratio_stat_str.first.empty() && !ratio_stat_str.second.empty())
+	{
+		constexpr char check_help_str[] = "check 'flip help' for more information";
+
+		// Check if the names are valid
+		if (!ge::str_to_stat.contains(ratio_stat_str.first))
+		{
+			std::cout << "stat_a is invalid\n" << check_help_str << "\n";
+			return 1;
+		}
+
+		if (!ge::str_to_stat.contains(ratio_stat_str.second))
+		{
+			std::cout << "stat_b is invalid\n" << check_help_str << "\n";
+			return 1;
+		}
+
+		filter.ratio_stat_a = ge::str_to_stat.at(ratio_stat_str.first);
+		filter.ratio_stat_b = ge::str_to_stat.at(ratio_stat_str.second);
 	}
 
 	std::vector<ge::item> items = ge::load_db();

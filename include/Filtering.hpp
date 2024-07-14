@@ -5,6 +5,7 @@
 
 #include <limits>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ge
@@ -21,12 +22,30 @@ namespace ge
 		bool is_max_set() const { return max < std::numeric_limits<i64>::max(); }
 	};
 
+	enum class stat
+	{
+		price, volume, limit, alch, none
+	};
+
+	const static inline std::unordered_map<std::string, stat> str_to_stat = {
+		{ "price", stat::price },
+		{ "volume", stat::volume },
+		{ "limit", stat::limit },
+		{ "alch", stat::alch },
+	};
+
 	struct filter
 	{
 		// Filtering ranges
 		range price, volume, limit, alch, cost;
 
 		bool find_profitable_to_alch_items = false;
+		bool volume_over_limit = false;
+
+		stat ratio_stat_a = stat::none;
+		stat ratio_stat_b = stat::none;
+		f32 stat_ratio = 1.0f;
+
 		std::string name_contains;
 		std::string regex_pattern;
 		u8 category = ge::item_categories.at("All");

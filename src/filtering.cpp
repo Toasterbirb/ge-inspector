@@ -1,11 +1,43 @@
 #include "DB.hpp"
 #include "Filtering.hpp"
 
+#include <iostream>
 #include <algorithm>
+#include <cassert>
 #include <regex>
 
 namespace ge
 {
+	f64 ratio_stat_value(const item& item, const stat ratio_stat)
+	{
+		f64 value;
+
+		switch (ratio_stat)
+		{
+			case stat::price:
+				value = item.price;
+				break;
+
+			case stat::volume:
+				value = item.volume;
+				break;
+
+			case stat::limit:
+				value = item.limit;
+				break;
+
+			case stat::alch:
+				value = item.high_alch;
+				break;
+
+			case stat::none:
+				assert(true == false && "This code path shouldn't get reached");
+				break;
+		}
+
+		return value;
+	}
+
 	std::vector<item> filter_items(const std::vector<item>& items, filter filter)
 	{
 		// Check the cost of a nature rune (we are assuming that a fire battlestaff is used)
@@ -13,6 +45,9 @@ namespace ge
 		u64 nature_rune_cost = filter.find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
 
 		static const u8 all_category_id = ge::item_categories.at("All");
+
+		// Check if ratio filtering should done
+		bool ratio_filtering_enabled = filter.ratio_stat_a != stat::none && filter.ratio_stat_b != stat::none;
 
 		std::vector<item> result;
 
@@ -47,12 +82,22 @@ namespace ge
 
 			bool regex_match = filter.regex_pattern.empty() ? true : std::regex_match(item.name, std::regex(filter.regex_pattern));
 			bool profitable_to_alch = filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
+			bool volume_over_limit = filter.volume_over_limit ? item.volume >= item.limit : true;
 
 			bool category_match = filter.category == all_category_id
 				? true
 				: filter.category == item.category;
 
-			return generic_filters && name_filter && regex_match && profitable_to_alch && category_match;
+			bool ratio_filter = true;
+			if (ratio_filtering_enabled)
+			{
+				f64 value_a = ratio_stat_value(item, filter.ratio_stat_a);
+				f64 value_b = ratio_stat_value(item, filter.ratio_stat_b);
+
+				ratio_filter = value_a >= value_b * filter.stat_ratio;
+			}
+
+			return generic_filters && name_filter && regex_match && profitable_to_alch && category_match && volume_over_limit && ratio_filter;
 		});
 
 		return result;
