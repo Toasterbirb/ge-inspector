@@ -47,7 +47,7 @@ namespace ge
 		f32 stat_ratio = 1.0f;
 
 		std::string name_contains;
-		std::string regex_pattern;
+		std::vector<std::string> regex_patterns;
 		u8 category = ge::item_categories.at("All");
 	};
 

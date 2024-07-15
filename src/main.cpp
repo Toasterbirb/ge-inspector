@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
 		clipp::option("--index").set(print_index) % "print the indices of items",
 		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)) % "filter items by name",
-		(clipp::option("--regex") & clipp::value("pattern", filter.regex_pattern)) % "filter items by name with regex",
+		(clipp::option("--regex") & clipp::value("pattern", filter.regex_patterns)).repeatable(true) % "filter items by name with regex",
 		(clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'",
 		(clipp::option("--category", "-c") & clipp::value("category", filter.category)) % "filter items by category (see categories with --list-categories)",
 		(clipp::option("--min-price") & clipp::value("price", filter.price.min)) % "minimum price",

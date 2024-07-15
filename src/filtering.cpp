@@ -80,7 +80,20 @@ namespace ge
 				name_filter = lowercase_name.find(filter.name_contains) != std::string::npos;
 			}
 
-			bool regex_match = filter.regex_pattern.empty() ? true : std::regex_match(item.name, std::regex(filter.regex_pattern));
+			bool regex_match = true;
+			if (!filter.regex_patterns.empty())
+			{
+				// Check if all regex ptterns match
+				for (const std::string& pattern : filter.regex_patterns)
+				{
+					if (!std::regex_match(item.name, std::regex(pattern)))
+					{
+						regex_match = false;
+						break;
+					}
+				}
+			}
+
 			bool profitable_to_alch = filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
 			bool volume_over_limit = filter.volume_over_limit ? item.volume >= item.limit : true;
 
