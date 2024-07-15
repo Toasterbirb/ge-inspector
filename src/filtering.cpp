@@ -1,7 +1,6 @@
 #include "DB.hpp"
 #include "Filtering.hpp"
 
-#include <iostream>
 #include <algorithm>
 #include <cassert>
 #include <regex>
