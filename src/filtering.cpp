@@ -87,7 +87,7 @@ namespace ge
 			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.volume); },
 
 			// High alch
-			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.high_alch); },
+			[&](const ge::item& item) -> bool { return filter.alch.is_in_range(item.high_alch); },
 
 			// Cost
 			[&](const ge::item& item) -> bool { return filter.cost.is_in_range(item.price * item.limit); },
