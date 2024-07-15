@@ -13,7 +13,6 @@
 #include <limits>
 #include <ranges>
 
-std::vector<std::string> tokenize_string(const std::string& line, const char separator);
 
 int main(int argc, char** argv)
 {
@@ -155,48 +154,7 @@ int main(int argc, char** argv)
 	// Set values based on pre-filtering
 	// However don't change user-defined values
 	if (!pre_filter_item_names.empty())
-	{
-		std::vector<std::string> item_names = tokenize_string(pre_filter_item_names, ';');
-
-		// Determine the min and max values from the given items
-		std::vector<ge::item> pre_filtered_items;
-		for (const std::string& pre_filter_item_name : item_names)
-		{
-			std::copy_if(items.begin(), items.end(), std::back_inserter(pre_filtered_items), [pre_filter_item_name](const ge::item& item){
-				return pre_filter_item_name == item.name;
-			});
-		}
-
-		ge::range pre_price { std::numeric_limits<i64>::max(), 0 };
-		ge::range pre_volume { std::numeric_limits<i64>::max(), 0 };
-		ge::range pre_limit { std::numeric_limits<i64>::max(), 0 };
-
-		const auto set_min_max_to_range = [](ge::range& range, const i64& value)
-		{
-			if (value < range.min)
-				range.min = value;
-
-			if (value > range.max)
-				range.max = value;
-		};
-
-		for (const ge::item& item : pre_filtered_items)
-		{
-			set_min_max_to_range(pre_price, item.price);
-			set_min_max_to_range(pre_volume, item.volume);
-			set_min_max_to_range(pre_limit, item.limit);
-		}
-
-		const auto apply_ranges_not_changed_by_user = [](const ge::range src, ge::range& dst)
-		{
-			dst.min = dst.is_min_set() ? dst.min : src.min;
-			dst.max = dst.is_max_set() ? dst.max : src.max;
-		};
-
-		apply_ranges_not_changed_by_user(pre_price, filter.price);
-		apply_ranges_not_changed_by_user(pre_volume, filter.volume);
-		apply_ranges_not_changed_by_user(pre_limit, filter.limit);
-	}
+		filter = ge::pre_filter(filter, items, pre_filter_item_names);
 
 	// Run the query
 	std::vector<ge::item> filtered_items = ge::filter_items(items, filter);
@@ -332,18 +290,4 @@ int main(int argc, char** argv)
 	}
 
 	return 0;
-}
-
-// Function stolen from subst
-std::vector<std::string> tokenize_string(const std::string& line, const char separator)
-{
-	std::vector<std::string> tokens;
-
-	std::istringstream line_stream(line);
-	std::string token;
-
-	while (std::getline(line_stream, token, separator))
-		tokens.push_back(token);
-
-	return tokens;
 }

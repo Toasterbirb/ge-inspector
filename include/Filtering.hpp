@@ -52,4 +52,6 @@ namespace ge
 	};
 
 	std::vector<item> filter_items(const std::vector<item>& items, filter filter);
+	std::vector<std::string> tokenize_string(const std::string& line, const char separator);
+	filter pre_filter(const filter user_provided_values, const std::vector<item>& items, const std::string& pre_filter_item_names);
 }
