@@ -3,10 +3,23 @@
 
 #include <algorithm>
 #include <cassert>
+#include <functional>
 #include <regex>
 
 namespace ge
 {
+	// Make sure that the filter stuff is working as intended
+	constexpr range TEST_RANGE { 1000, 2000 };
+	static_assert(TEST_RANGE.is_min_set());
+	static_assert(TEST_RANGE.is_max_set());
+	static_assert(TEST_RANGE.min == 1000);
+	static_assert(TEST_RANGE.max == 2000);
+	static_assert(TEST_RANGE.is_in_range(1000));
+	static_assert(TEST_RANGE.is_in_range(2000));
+	static_assert(TEST_RANGE.is_in_range(1500));
+	static_assert(!TEST_RANGE.is_in_range(999));
+	static_assert(!TEST_RANGE.is_in_range(2001));
+
 	f64 ratio_stat_value(const item& item, const stat ratio_stat)
 	{
 		f64 value;
@@ -43,6 +56,11 @@ namespace ge
 		// This variable is only really used if we are checking for alching profitability
 		u64 nature_rune_cost = filter.find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
 
+		// Convert the name contains filter to lowercase
+		std::transform(filter.name_contains.begin(), filter.name_contains.end(), filter.name_contains.begin(), [](unsigned char c) {
+			return std::tolower(c);
+		});
+
 		static const u8 all_category_id = ge::item_categories.at("All");
 
 		// Check if ratio filtering should done
@@ -50,25 +68,58 @@ namespace ge
 
 		std::vector<item> result;
 
-		std::copy_if(items.begin(), items.end(), std::back_inserter(result), [&](const ge::item& item){
-			bool generic_filters = item.price >= filter.price.min
-						&& item.price <= filter.price.max
-						&& (item.price * item.limit) <= filter.cost.max
-						&& (item.price * item.limit) >= filter.cost.min
-						&& item.volume >= filter.volume.min
-						&& item.volume <= filter.volume.max
-						&& item.limit >= filter.limit.min
-						&& item.limit <= filter.limit.max
-						&& item.high_alch >= filter.alch.min
-						&& item.high_alch <= filter.alch.max;
-
-			// Avoid the more costly checks if the generic filters already don't match
-			if (!generic_filters)
-				return false;
-
-			bool name_filter = filter.name_contains.empty();
-			if (!filter.name_contains.empty())
+		const static std::vector<std::function<bool(const ge::item& item)>> filter_funcs = {
+			// Category matching
+			[&](const ge::item& item) -> bool
 			{
+				return filter.category == all_category_id
+					? true
+					: filter.category == item.category;
+			},
+
+			// Price
+			[&](const ge::item& item) -> bool { return filter.price.is_in_range(item.price); },
+
+			// Buy limit
+			[&](const ge::item& item) -> bool { return filter.limit.is_in_range(item.limit); },
+
+			// Volume
+			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.volume); },
+
+			// High alch
+			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.high_alch); },
+
+			// Cost
+			[&](const ge::item& item) -> bool { return filter.cost.is_in_range(item.price * item.limit); },
+
+			// Volume over limit
+			[&](const ge::item& item) -> bool { return filter.volume_over_limit ? item.volume >= item.limit : true; },
+
+			// Profitable to alch
+			[&](const ge::item& item) -> bool
+			{
+				return filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
+			},
+
+			// Stat ratio filter
+			[&](const ge::item& item) -> bool
+			{
+				if (!ratio_filtering_enabled)
+					return true;
+
+				f64 value_a = ratio_stat_value(item, filter.ratio_stat_a);
+				f64 value_b = ratio_stat_value(item, filter.ratio_stat_b);
+
+				return value_a >= value_b * filter.stat_ratio;
+			},
+
+			// Name filter
+			[&](const ge::item& item) -> bool
+			{
+				// Check if the name filtering was used
+				if (filter.name_contains.empty())
+					return true;
+
 				// Convert everything to lowercase before doing the comparisons
 				std::string lowercase_name;
 
@@ -76,44 +127,26 @@ namespace ge
 					return std::tolower(c);
 				});
 
-				std::transform(filter.name_contains.begin(), filter.name_contains.end(), filter.name_contains.begin(), [](unsigned char c) {
-					return std::tolower(c);
-				});
+				return lowercase_name.find(filter.name_contains) != std::string::npos;
+			},
 
-				name_filter = lowercase_name.find(filter.name_contains) != std::string::npos;
-			}
-
-			bool regex_match = true;
-			if (!filter.regex_patterns.empty())
+			// Regex matching
+			[&](const ge::item& item) -> bool
 			{
+				// Check if regex matching was used
+				if (filter.regex_patterns.empty())
+					return true;
+
 				// Check if all regex ptterns match
-				for (const std::string& pattern : filter.regex_patterns)
-				{
-					if (!std::regex_match(item.name, std::regex(pattern)))
-					{
-						regex_match = false;
-						break;
-					}
-				}
+				return std::all_of(filter.regex_patterns.begin(), filter.regex_patterns.end(), [&](const std::string& pattern){
+					return std::regex_match(item.name, std::regex(pattern));
+				});
 			}
+		};
 
-			bool profitable_to_alch = filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
-			bool volume_over_limit = filter.volume_over_limit ? item.volume >= item.limit : true;
-
-			bool category_match = filter.category == all_category_id
-				? true
-				: filter.category == item.category;
-
-			bool ratio_filter = true;
-			if (ratio_filtering_enabled)
-			{
-				f64 value_a = ratio_stat_value(item, filter.ratio_stat_a);
-				f64 value_b = ratio_stat_value(item, filter.ratio_stat_b);
-
-				ratio_filter = value_a >= value_b * filter.stat_ratio;
-			}
-
-			return generic_filters && name_filter && regex_match && profitable_to_alch && category_match && volume_over_limit && ratio_filter;
+		std::copy_if(items.begin(), items.end(), std::back_inserter(result), [&](const ge::item& item){
+			// Execute filtering functions
+			return std::all_of(filter_funcs.begin(), filter_funcs.end(), [&](const auto& func) { return func(item); });
 		});
 
 		return result;

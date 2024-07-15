@@ -16,10 +16,19 @@ namespace ge
 		i64 max = std::numeric_limits<i64>::max();
 
 		__attribute__((warn_unused_result))
-		bool is_min_set() const { return min > 1; }
+		constexpr bool is_min_set() const { return min > 1; }
 
 		__attribute__((warn_unused_result))
-		bool is_max_set() const { return max < std::numeric_limits<i64>::max(); }
+		constexpr bool is_max_set() const
+		{
+			return max < std::numeric_limits<i64>::max();
+		}
+
+		__attribute__((warn_unused_result))
+		constexpr bool is_in_range(const i64 value) const
+		{
+			return value >= min && value <= max;
+		}
 	};
 
 	enum class stat
