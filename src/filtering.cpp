@@ -93,12 +93,18 @@ namespace ge
 			[&](const ge::item& item) -> bool { return filter.cost.is_in_range(item.price * item.limit); },
 
 			// Volume over limit
-			[&](const ge::item& item) -> bool { return filter.volume_over_limit ? item.volume >= item.limit : true; },
+			[&](const ge::item& item) -> bool {
+				return filter.volume_over_limit
+					? item.volume >= item.limit
+					: true;
+			},
 
 			// Profitable to alch
 			[&](const ge::item& item) -> bool
 			{
-				return filter.find_profitable_to_alch_items ? (item.price + nature_rune_cost) < item.high_alch : true;
+				return filter.find_profitable_to_alch_items
+					? (item.price + nature_rune_cost) < item.high_alch
+					: true;
 			},
 
 			// Stat ratio filter
