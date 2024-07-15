@@ -71,7 +71,10 @@ int main(int argc, char** argv)
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
 		clipp::option("--profitable-alch").set(filter.find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
 		clipp::option("--volume-over-limit").set(filter.volume_over_limit) % "find items with trade volume higher than their buy limit",
-		(clipp::option("--stat-ratio") & clipp::value("stat_a", ratio_stat_str.first) & clipp::value("stat_b", ratio_stat_str.second) & clipp::number("ratio", filter.stat_ratio)) % ratio_help_str,
+		(clipp::option("--stat-ratio")
+		 & clipp::value("stat_a", ratio_stat_str.first)
+		 & clipp::value("stat_b", ratio_stat_str.second)
+		 & clipp::number("ratio", filter.stat_ratio)) % ratio_help_str,
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
 		clipp::option("--index").set(print_index) % "print the indices of items",
