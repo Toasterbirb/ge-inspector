@@ -69,13 +69,8 @@ namespace ge
 		std::vector<item> result;
 
 		const static std::vector<std::function<bool(const ge::item& item)>> filter_funcs = {
-			// Category matching
-			[&](const ge::item& item) -> bool
-			{
-				return filter.category == all_category_id
-					? true
-					: filter.category == item.category;
-			},
+			// Volume
+			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.volume); },
 
 			// Price
 			[&](const ge::item& item) -> bool { return filter.price.is_in_range(item.price); },
@@ -83,14 +78,19 @@ namespace ge
 			// Buy limit
 			[&](const ge::item& item) -> bool { return filter.limit.is_in_range(item.limit); },
 
-			// Volume
-			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.volume); },
-
 			// High alch
 			[&](const ge::item& item) -> bool { return filter.alch.is_in_range(item.high_alch); },
 
 			// Cost
 			[&](const ge::item& item) -> bool { return filter.cost.is_in_range(item.price * item.limit); },
+
+			// Category matching
+			[&](const ge::item& item) -> bool
+			{
+				return filter.category == all_category_id
+					? true
+					: filter.category == item.category;
+			},
 
 			// Volume over limit
 			[&](const ge::item& item) -> bool {
