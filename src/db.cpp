@@ -1,6 +1,7 @@
 #include "CURL.hpp"
 #include "DB.hpp"
 #include "Item.hpp"
+#include "PrintUtils.hpp"
 
 #include <assert.h>
 #include <filesystem>
@@ -174,6 +175,8 @@ namespace ge
 		if (item.members != ge::members_item::unknown)
 			return false;
 
+		std::cout << " > Updating data with item: " << item.name << std::flush;
+
 		nlohmann::json item_details;
 
 		try {
@@ -198,6 +201,7 @@ namespace ge
 		}
 
 		const u8 category_id = item_categories.at(item_type);
+		std::cout << " (" << item_type << ")" << std::flush;
 
 		// Get the member information for all items that have the same
 		// first letter in the name and belong to the same category
@@ -250,6 +254,9 @@ namespace ge
 								item.members = ge::members_item::no;
 						}
 					}
+
+					// Print dots to show progress
+					std::cout << '.' << std::flush;
 				}
 			} while (!category_json["items"].empty());
 		}
@@ -266,6 +273,9 @@ namespace ge
 
 			(*item_it)["members"] = ge::members_item::no_data;
 		}
+
+		// Clean up the line in case some other printing was already going on at this point
+		ge::clear_current_line();
 
 		// Update the DB incase the query gets cancelled abrubtly
 		write_db();

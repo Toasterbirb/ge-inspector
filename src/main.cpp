@@ -3,6 +3,7 @@
 #include "Filtering.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
+#include "PrintUtils.hpp"
 #include "Random.hpp"
 #include "Types.hpp"
 
@@ -195,7 +196,7 @@ int main(int argc, char** argv)
 				++checked_item_count;
 				std::cout << "\rItems checked: " << checked_item_count << "/" << max_checked_items << std::flush;
 			}
-			std::cout << "\33[2K\r";
+			ge::clear_current_line();
 
 			if (checked_item_count >= max_checked_items)
 				std::cout << "Reached the maximum amount of items to check. Try again with different search options\n";
