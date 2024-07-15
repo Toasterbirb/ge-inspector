@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 	bool print_index = false;
 	bool print_terse_format = false;
 	bool print_category_list = false;
+	bool print_count = false;
 
 	ge::filter filter;
 
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
 		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
+		clipp::option("--count").set(print_count) % "show result count at the end of the output",
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
 		clipp::option("--profitable-alch").set(filter.find_profitable_to_alch_items) % "find items that are profitable to alch with high alchemy",
@@ -290,6 +292,10 @@ int main(int argc, char** argv)
 			for (ge::item& item : filtered_items | std::views::reverse)
 				print_item_line(item);
 	}
+
+	if (print_count)
+		std::cout << (colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "")
+			<< "\nResults: " << filtered_items.size() << '\n';
 
 	return 0;
 }
