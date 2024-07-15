@@ -2,8 +2,10 @@
 #include "DB.hpp"
 #include "Item.hpp"
 #include "PrintUtils.hpp"
+#include "Random.hpp"
 
 #include <assert.h>
+#include <chrono>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -20,6 +22,11 @@ namespace ge
 
 	static const std::string db_dir_path = std::string(getenv("HOME")) + "/.local/share/ge-inspector";
 	static const std::string db_path = db_dir_path + "/price.json";
+
+	constexpr char db_update_lock_file[] = "/tmp/ge-inspector-update-lock";
+
+	using namespace std::chrono_literals;
+	constexpr std::chrono::duration update_cooldown_time = 1h;
 
 	constexpr char price_json_url[] = "https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson";
 	constexpr char id_json_url[] = "https://runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson";
@@ -98,6 +105,17 @@ namespace ge
 			return;
 		}
 
+		// Don't do anything if the database was updated very recently
+		if (std::filesystem::exists(db_update_lock_file))
+		{
+			const std::chrono::time_point db_last_edit = std::filesystem::last_write_time(db_path);
+			const std::chrono::time_point now = std::chrono::clock_cast<std::chrono::file_clock>(std::chrono::system_clock::now());
+
+			const auto duration = std::chrono::duration(now - db_last_edit);
+			if (std::chrono::duration_cast<std::chrono::hours>(duration) < update_cooldown_time)
+				return;
+		}
+
 		// Download the latest price and volume data
 		std::future<nlohmann::json> price_data_future = std::async(std::launch::async,
 				download_json, price_json_url, 0);
@@ -147,6 +165,13 @@ namespace ge
 			assert(!db["items"].empty());
 
 			db_file << db << std::endl;
+		}
+
+		// Create a lock file to create a simple timestamp for the update
+		// This should help with avoiding unnecessary db updates
+		{
+			std::ofstream lock_file(db_update_lock_file);
+			lock_file << "Remove this file if you want to force ge-inspector to update its database\n" << random_seed();
 		}
 	}
 
