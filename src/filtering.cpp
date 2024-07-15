@@ -62,6 +62,10 @@ namespace ge
 						&& item.high_alch >= filter.alch.min
 						&& item.high_alch <= filter.alch.max;
 
+			// Avoid the more costly checks if the generic filters already don't match
+			if (!generic_filters)
+				return false;
+
 			bool name_filter = filter.name_contains.empty();
 			if (!filter.name_contains.empty())
 			{
