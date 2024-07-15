@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 		(clipp::option("--budget", "-b", "--max-cost") & clipp::number("budget", filter.cost.max)) % "maximum budget for total cost",
 		(clipp::option("--sort", "-s") & clipp::one_of(sorting_mode_commands)) % "sort the results",
 		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order",
-		(clipp::option("--color", "-c") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
+		(clipp::option("--color") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
 	);
 
 	if (!clipp::parse(argc, argv, cli))
