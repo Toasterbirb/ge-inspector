@@ -105,9 +105,6 @@ namespace ge
 		std::future<nlohmann::json> volume_data_future = std::async(std::launch::async,
 				download_json, volume_json_url, 0);
 
-		// There might be new items that are not yet in the database
-		std::vector<std::string> new_items;
-
 		nlohmann::json db;
 
 		// Update the database data
