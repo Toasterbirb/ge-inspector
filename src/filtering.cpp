@@ -129,7 +129,7 @@ namespace ge
 		return tokens;
 	}
 
-	filter pre_filter(const filter user_provided_values, const std::vector<item>& items, const std::string& pre_filter_item_names)
+	filter pre_filter(const filter& user_provided_values, const std::vector<item>& items, const std::string& pre_filter_item_names)
 	{
 		filter filter = user_provided_values;
 
