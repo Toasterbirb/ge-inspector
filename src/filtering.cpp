@@ -107,6 +107,15 @@ namespace ge
 					: true;
 			},
 
+			// Minimum profit
+			[&](const ge::item& item) -> bool
+			{
+				if (filter.min_margin_percent == 0 || filter.min_margin_profit_goal == 0)
+					return true;
+
+				return (item.price * (1 + filter.min_margin_percent * 0.01) - item.price) * item.limit >= filter.min_margin_profit_goal;
+			},
+
 			// Stat ratio filter
 			[&](const ge::item& item) -> bool
 			{

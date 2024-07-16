@@ -100,6 +100,7 @@ int main(int argc, char** argv)
 		(clipp::option("--min-alch") & clipp::number("alch", filter.alch.min)) % "minimum high alchemy amount",
 		(clipp::option("--max-alch") & clipp::number("alch", filter.alch.max)) % "maximum high alchemy amount",
 		(clipp::option("--min-cost") & clipp::number("cost", filter.cost.min)) % "minimum cost of the flip",
+		(clipp::option("--min-profit") & clipp::number("price-change-%", filter.min_margin_percent) & clipp::number("profit_goal", filter.min_margin_profit_goal)) % "find items where the given price increase (in percent, eg. 2 == 2% and 0.5 == 0.5%) would result in the profit goal assuming the full buy-limit can be bought",
 		(clipp::option("--budget", "-b", "--max-cost") & clipp::number("budget", filter.cost.max)) % "maximum budget for total cost",
 		(clipp::option("--sort", "-s") & clipp::one_of(sorting_mode_commands)) % "sort the results",
 		clipp::option("--invert", "-i").set(invert_sort) % "invert the result order",
