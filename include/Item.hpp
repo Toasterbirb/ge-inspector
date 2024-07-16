@@ -95,7 +95,7 @@ namespace ge
 		volume, price, alch, alch_profit, cost, limit, none
 	};
 
-	static inline std::array<std::tuple<sort_mode, std::string, std::string, std::function<bool(const item& a, const item& b)>>, 6> sorting_modes = {
+	static inline const std::array<std::tuple<sort_mode, std::string, std::string, std::function<bool(const item& a, const item& b)>>, 6> sorting_modes = {
 		std::make_tuple(sort_mode::volume, "volume", "sort by volume",
 			[](const item& a, const item& b)
 			{
