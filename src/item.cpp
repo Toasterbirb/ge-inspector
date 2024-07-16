@@ -51,7 +51,7 @@ namespace ge
 			return a.second < b.second;
 		});
 
-		for (const auto[name, id] : sorted_category_list)
+		for (const auto& [name, id] : sorted_category_list)
 		{
 			// Skip duplicate categories
 			if (duplicate_category_names.contains(name))

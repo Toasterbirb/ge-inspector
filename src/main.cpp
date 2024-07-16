@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 		colorscheme_commands.push_back(clipp::command(color.second.first).set(colorscheme, color.first));
 
 	std::pair<std::string, std::string> ratio_stat_str;
-	std::string ratio_help_str =
+	const std::string ratio_help_str =
 		"compare the ratios of different statistics and filter out items that have a ratio of equal or lower than the one stated (true if stat_a >= stat_b * ratio)\n\navailable stats to compare: "
 		+ []() -> std::string {
 			std::string stats;
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 		}()
 		+ '\n';
 
-	auto cli = (
+	const auto cli = (
 		clipp::option("--help", "-h").set(show_help) % "show help",
 		(clipp::option("--update", "-u").set(update_db) % "update the database before processing the query"
 		 & clipp::option("--quiet", "-q").set(quiet_db_update) % "only update the db and don't print out any results"),
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 
 	if (show_help)
 	{
-		auto fmt = clipp::doc_formatting{}.doc_column(40);
+		const auto fmt = clipp::doc_formatting{}.doc_column(40);
 
 		std::cout << clipp::make_man_page(cli, "ge-inspector", fmt);
 		return 0;
@@ -257,7 +257,7 @@ int main(int argc, char** argv)
 		}
 
 		u16 index = 0;
-		auto print_item_line = [&](ge::item& item)
+		const auto print_item_line = [&](ge::item& item)
 		{
 			if (check_member_status && ge::update_item_member_status(item))
 				ge::update_filtered_item_data(filtered_items);
