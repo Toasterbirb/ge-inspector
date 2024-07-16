@@ -1,6 +1,6 @@
 #include "Item.hpp"
-#include "ItemSortLambdas.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <unordered_set>
@@ -63,35 +63,19 @@ namespace ge
 
 	void sort_items(std::vector<item>& items, const sort_mode mode)
 	{
-		switch (mode)
-		{
-			case ge::sort_mode::volume:
-				std::sort(items.begin(), items.end(), ge::sort_by_volume);
-				break;
+		if (mode == sort_mode::none)
+			return;
 
-			case ge::sort_mode::price:
-				std::sort(items.begin(), items.end(), ge::sort_by_price);
-				break;
+		// Find the matching sorting mode
+		auto sort_mode_it = std::find_if(sorting_modes.begin(), sorting_modes.end(), [mode](const auto& sort_mode_tuple){
+			return std::get<sort_mode>(sort_mode_tuple) == mode;
+		});
 
-			case ge::sort_mode::alch:
-				std::sort(items.begin(), items.end(), ge::sort_by_alch);
-				break;
+		assert(sort_mode_it != sorting_modes.end());
+		if (sort_mode_it == sorting_modes.end())
+			return;
 
-			case ge::sort_mode::alch_profit:
-				std::sort(items.begin(), items.end(), ge::sort_by_alch_profit);
-				break;
-
-			case ge::sort_mode::cost:
-				std::sort(items.begin(), items.end(), ge::sort_by_total_cost);
-				break;
-
-			case ge::sort_mode::limit:
-				std::sort(items.begin(), items.end(), ge::sort_by_limit);
-				break;
-
-			case ge::sort_mode::none:
-				break;
-		}
+		// Sort the item list with the sorting lambda
+		std::sort(items.begin(), items.end(), std::get<std::function<bool(const item& a, const item& b)>>(*sort_mode_it));
 	}
-
 }

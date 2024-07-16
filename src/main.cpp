@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	ge::sort_mode sort_mode = ge::sort_mode::none;
 
 	clipp::group sorting_mode_commands;
-	for (const auto& [mode, name, description] : ge::sorting_modes)
+	for (const auto& [mode, name, description, func] : ge::sorting_modes)
 		sorting_mode_commands.push_back(clipp::command(name).set(sort_mode, mode).doc(description));
 
 	// Generate the colorscheme option list

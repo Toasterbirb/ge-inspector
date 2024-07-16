@@ -3,6 +3,7 @@
 #include "Types.hpp"
 
 #include <array>
+#include <functional>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <tuple>
@@ -94,13 +95,48 @@ namespace ge
 		volume, price, alch, alch_profit, cost, limit, none
 	};
 
-	static inline std::array sorting_modes = {
-		std::make_tuple(sort_mode::volume, "volume", "sort by volume"),
-		std::make_tuple(sort_mode::price, "price", "sort by price"),
-		std::make_tuple(sort_mode::alch, "alch", "sort by the high alchemy price"),
-		std::make_tuple(sort_mode::alch_profit, "alch_profit", "sort by the profit margin of high alchemy"),
-		std::make_tuple(sort_mode::cost, "cost", "sort by total cost"),
-		std::make_tuple(sort_mode::limit, "limit", "sort by buy limit"),
+	static inline std::array<std::tuple<sort_mode, std::string, std::string, std::function<bool(const item& a, const item& b)>>, 6> sorting_modes = {
+		std::make_tuple(sort_mode::volume, "volume", "sort by volume",
+			[](const item& a, const item& b)
+			{
+				return a.volume < b.volume;
+			}
+		),
+
+		std::make_tuple(sort_mode::price, "price", "sort by price",
+			[](const item& a, const item& b)
+			{
+				return a.price < b.price;
+			}
+		),
+
+		std::make_tuple(sort_mode::alch, "alch", "sort by the high alchemy price",
+			[](const item& a, const item& b)
+			{
+				return a.high_alch < b.high_alch;
+			}
+		),
+
+		std::make_tuple(sort_mode::alch_profit, "alch_profit", "sort by the profit margin of high alchemy",
+			[](const item& a, const item& b)
+			{
+				return (a.high_alch - a.price) < (b.high_alch - b.price);
+			}
+		),
+
+		std::make_tuple(sort_mode::cost, "cost", "sort by total cost",
+			[](const item& a, const item& b)
+			{
+				return (a.limit * a.price) < (b.limit * b.price);
+			}
+		),
+
+		std::make_tuple(sort_mode::limit, "limit", "sort by buy limit",
+			[](const item& a, const item& b)
+			{
+				return a.limit < b.limit;
+			}
+		),
 	};
 
 	void to_json(nlohmann::json& j, const item& i);
