@@ -92,10 +92,10 @@ namespace ge
 
 	enum class sort_mode
 	{
-		volume, price, alch, alch_profit, cost, limit, none
+		volume, price, alch, alch_profit, cost, limit, volume_limit_ratio, none
 	};
 
-	static inline const std::array<std::tuple<sort_mode, std::string, std::string, std::function<bool(const item& a, const item& b)>>, 6> sorting_modes = {
+	static inline const std::array<std::tuple<sort_mode, std::string, std::string, std::function<bool(const item& a, const item& b)>>, 7> sorting_modes = {
 		std::make_tuple(sort_mode::volume, "volume", "sort by volume",
 			[](const item& a, const item& b)
 			{
@@ -135,6 +135,13 @@ namespace ge
 			[](const item& a, const item& b)
 			{
 				return a.limit < b.limit;
+			}
+		),
+
+		std::make_tuple(sort_mode::volume_limit_ratio, "volume_limit_ratio", "sort by the ratio of volume and buy limit",
+			[](const item& a, const item& b)
+			{
+				return (a.volume / static_cast<f64>(a.limit)) < (b.volume / static_cast<f64>(b.limit));
 			}
 		),
 	};
