@@ -14,6 +14,11 @@ namespace ge
 		return a.high_alch < b.high_alch;
 	};
 
+	static auto sort_by_alch_profit = [](const item& a, const item& b)
+	{
+		return (a.high_alch - a.price) < (b.high_alch - b.price);
+	};
+
 	static auto sort_by_volume = [](const item& a, const item& b)
 	{
 		return a.volume < b.volume;

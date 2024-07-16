@@ -77,6 +77,10 @@ namespace ge
 				std::sort(items.begin(), items.end(), ge::sort_by_alch);
 				break;
 
+			case ge::sort_mode::alch_profit:
+				std::sort(items.begin(), items.end(), ge::sort_by_alch_profit);
+				break;
+
 			case ge::sort_mode::cost:
 				std::sort(items.begin(), items.end(), ge::sort_by_total_cost);
 				break;
