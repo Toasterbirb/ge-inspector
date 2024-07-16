@@ -187,8 +187,32 @@ namespace ge
 
 	void write_db()
 	{
-		std::ofstream file(db_path);
-		file << DATABASE << std::endl;
+		// To avoid DB corruption, first write into a temporary file and then
+		// copy that file into the actual DB location
+
+		constexpr char temp_db_path[] = "/tmp/ge-inspector-temporary-db";
+		constexpr char db_backup_path[] = "/tmp/ge-inspector-db-backup";
+
+		{
+			std::ofstream tmp_db(temp_db_path);
+			tmp_db << DATABASE << std::endl;
+		}
+
+		if (!std::filesystem::exists(temp_db_path))
+		{
+			std::cout << "couldn't write into a temporary database file at " << temp_db_path << '\n';
+			exit(1);
+		}
+
+		// Create a backup of the database just in case
+		std::filesystem::copy(db_path, db_backup_path);
+
+		// Remove the current database and copy over the temporary file
+		std::filesystem::remove(db_path);
+		std::filesystem::copy(temp_db_path, db_path);
+
+		// If we are still executing, delete the backup file
+		std::filesystem::remove(db_backup_path);
 	}
 
 	bool update_item_member_status(item& item)
