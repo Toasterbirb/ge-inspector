@@ -84,8 +84,8 @@ namespace ge
 		{ "Archaeology materials", 41 },
 		{ "Wood spirits", 42 },
 		{ "Necromancy armour", 43 },
-		{ "All", 254 },
-		{ "Unknown", 255 },
+		{ "All", -2 },
+		{ "Unknown", -1 },
 	};
 
 	void list_categories();
