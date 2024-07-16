@@ -41,14 +41,20 @@ int main(int argc, char** argv)
 
 	ge::sort_mode sort_mode = ge::sort_mode::none;
 
-	clipp::group sorting_mode_commands;
-	for (const auto& [mode, name, description, func] : ge::sorting_modes)
-		sorting_mode_commands.push_back(clipp::command(name).set(sort_mode, mode).doc(description));
+	const clipp::group sorting_mode_commands = [&]() {
+		clipp::group cmds;
+		for (const auto& [mode, name, description, func] : ge::sorting_modes)
+			cmds.push_back(clipp::command(name).set(sort_mode, mode).doc(description));
+		return cmds;
+	}();
 
 	// Generate the colorscheme option list
-	clipp::group colorscheme_commands;
-	for (const auto& color : ge::colorschemes)
-		colorscheme_commands.push_back(clipp::command(color.second.first).set(colorscheme, color.first));
+	const clipp::group colorscheme_commands = [&]() {
+		clipp::group cmds;
+		for (const auto& color : ge::colorschemes)
+			cmds.push_back(clipp::command(color.second.first).set(colorscheme, color.first));
+		return cmds;
+	}();
 
 	std::pair<std::string, std::string> ratio_stat_str;
 	const std::string ratio_help_str =
