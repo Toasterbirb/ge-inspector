@@ -255,8 +255,8 @@ int main(int argc, char** argv)
 				<< std::setw(name_width) << "Name"
 				<< std::setw(price_width) << "Price"
 				<< std::setw(volume_width) << "Volume"
-				<< std::setw(total_cost_width) << "Total cost"
 				<< std::setw(limit_width) << "Limit"
+				<< std::setw(total_cost_width) << "Total cost"
 				<< std::setw(high_alch_width) << "High alch"
 				<< std::setw(members_width) << "Members"
 				<< "\n";
@@ -281,8 +281,8 @@ int main(int argc, char** argv)
 				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
 				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
 				<< std::setw(volume_width) << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) )
-				<< std::setw(total_cost_width) << ( print_short_price ? ge::round_big_numbers(total_item_cost) : std::to_string(total_item_cost) )
 				<< std::setw(limit_width) << item.limit
+				<< std::setw(total_cost_width) << ( print_short_price ? ge::round_big_numbers(total_item_cost) : std::to_string(total_item_cost) )
 				<< std::setw(high_alch_width) << item.high_alch
 				<< std::setw(members_width) << ge::members_item_str.at(item.members)
 				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
