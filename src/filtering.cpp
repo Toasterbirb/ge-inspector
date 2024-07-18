@@ -20,6 +20,24 @@ namespace ge
 	static_assert(!TEST_RANGE.is_in_range(999));
 	static_assert(!TEST_RANGE.is_in_range(2001));
 
+	// Group different buy limits into groups to avoid unnecessary
+	// fragmentation if the difference in limits is very small
+	u32 buy_limit_group(const u32 buy_limit)
+	{
+		if (buy_limit <= 10) return 10;
+		if (buy_limit <= 50) return 50;
+		if (buy_limit <= 100) return 100;
+		if (buy_limit <= 500) return 500;
+		if (buy_limit <= 1000) return 1000;
+		if (buy_limit <= 2500) return 2500;
+		if (buy_limit <= 5000) return 5000;
+		if (buy_limit <= 12000) return 12000;
+		if (buy_limit <= 25000) return 25000;
+		if (buy_limit <= 50000) return 50000;
+
+		return buy_limit;
+	}
+
 	f64 ratio_stat_value(const item& item, const stat ratio_stat)
 	{
 		f64 value;
@@ -74,10 +92,12 @@ namespace ge
 			{
 				if (!filter.pre_filter_volume.empty())
 				{
-					if (!filter.pre_filter_volume.contains(item.limit))
+					const u32 limit_group = buy_limit_group(item.limit);
+
+					if (!filter.pre_filter_volume.contains(limit_group))
 						return false;
 
-					return filter.pre_filter_volume.at(item.limit)
+					return filter.pre_filter_volume.at(limit_group)
 						.is_in_range(item.volume, filter.pre_filter_fuzz_factor);
 				}
 
@@ -89,10 +109,12 @@ namespace ge
 			{
 				if (!filter.pre_filter_volume.empty())
 				{
-					if (!filter.pre_filter_price.contains(item.limit))
+					const u32 limit_group = buy_limit_group(item.limit);
+
+					if (!filter.pre_filter_price.contains(limit_group))
 						return false;
 
-					return filter.pre_filter_price.at(item.limit)
+					return filter.pre_filter_price.at(limit_group)
 						.is_in_range(item.price, filter.pre_filter_fuzz_factor);
 				}
 
@@ -234,14 +256,16 @@ namespace ge
 
 		for (const ge::item& item : pre_filtered_items)
 		{
-			if (!filter.pre_filter_price.contains(item.limit))
-				filter.pre_filter_price[item.limit] = starting_range;
+			const u32 limit_group = buy_limit_group(item.limit);
 
-			if (!filter.pre_filter_volume.contains(item.limit))
-				filter.pre_filter_volume[item.limit] = starting_range;
+			if (!filter.pre_filter_price.contains(limit_group))
+				filter.pre_filter_price[limit_group] = starting_range;
 
-			set_min_max_to_range(filter.pre_filter_price.at(item.limit), item.price);
-			set_min_max_to_range(filter.pre_filter_volume.at(item.limit), item.volume);
+			if (!filter.pre_filter_volume.contains(limit_group))
+				filter.pre_filter_volume[limit_group] = starting_range;
+
+			set_min_max_to_range(filter.pre_filter_price.at(limit_group), item.price);
+			set_min_max_to_range(filter.pre_filter_volume.at(limit_group), item.volume);
 		}
 
 		const auto apply_ranges_changed_by_user = [](const ge::range src, ge::range& dst)
