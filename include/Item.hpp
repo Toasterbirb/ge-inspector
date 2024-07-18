@@ -35,6 +35,7 @@ namespace ge
 		u8 category = -1;
 	};
 
+	const static inline std::string all_category = "all";
 	const static std::unordered_map<std::string, u8> item_categories = {
 		{ "Miscellaneous", 0 },
 		{ "Ammo", 1 },
@@ -84,10 +85,11 @@ namespace ge
 		{ "Archaeology materials", 41 },
 		{ "Wood spirits", 42 },
 		{ "Necromancy armour", 43 },
-		{ "All", -2 },
-		{ "Unknown", -1 },
+		{ all_category, -2 },
+		{ "unknown", -1 },
 	};
 
+	std::string category_id_to_str(const u8 category_id);
 	void list_categories();
 
 	enum class sort_mode

@@ -230,7 +230,8 @@ int main(int argc, char** argv)
 				<< std::setw(info_column_width) << "Volume" + separator << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) ) << '\n'
 				<< std::setw(info_column_width) << "Total cost" + separator << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
 				<< std::setw(info_column_width) << "High alch" + separator << item.high_alch << '\n'
-				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
+				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members) << '\n'
+				<< std::setw(info_column_width) << "Category" + separator << ge::category_id_to_str(item.category)
 				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
 				<< '\n';
 	}

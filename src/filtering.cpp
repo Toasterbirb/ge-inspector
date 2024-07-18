@@ -82,7 +82,7 @@ namespace ge
 			});
 		});
 
-		static const u8 all_category_id = ge::item_categories.at("All");
+		static const u8 all_category_id = ge::item_categories.at(all_category);
 
 		// Check if ratio filtering should done
 		bool ratio_filtering_enabled = filter.ratio_stat_a != stat::none && filter.ratio_stat_b != stat::none;

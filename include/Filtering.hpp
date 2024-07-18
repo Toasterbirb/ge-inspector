@@ -67,7 +67,7 @@ namespace ge
 
 		std::vector<std::string> name_contains;
 		std::vector<std::string> regex_patterns;
-		u8 category = ge::item_categories.at("All");
+		u8 category = ge::item_categories.at(all_category);
 
 		// Group pre-filter data based on buy limits
 		std::unordered_map<u32, range> pre_filter_price;

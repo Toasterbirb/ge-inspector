@@ -33,6 +33,14 @@ namespace ge
 		j.at("category").get_to(i.category);
 	}
 
+	std::string category_id_to_str(const u8 category_id)
+	{
+		return std::find_if(item_categories.begin(), item_categories.end(), [category_id](const std::pair<std::string, u8> category)
+		{
+			return category_id == category.second;
+		})->first;
+	}
+
 	void list_categories()
 	{
 		// Some duplicates that should be skipped
