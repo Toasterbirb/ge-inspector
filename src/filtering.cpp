@@ -24,6 +24,7 @@ namespace ge
 	// fragmentation if the difference in limits is very small
 	u32 buy_limit_group(const u32 buy_limit)
 	{
+		if (buy_limit <= 8) return 8;
 		if (buy_limit <= 10) return 10;
 		if (buy_limit <= 50) return 50;
 		if (buy_limit <= 100) return 100;
