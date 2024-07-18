@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 		clipp::option("--short").set(print_short_price) % "print prices in a shorter form eg. 1.2m, 538k",
 		clipp::option("--no-header").set(print_no_header) % "don't print the header row",
 		clipp::option("--index").set(print_index) % "print the indices of items",
-		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)) % "filter items by name",
+		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)).repeatable(true) % "filter items by name",
 		(clipp::option("--regex") & clipp::value("pattern", filter.regex_patterns)).repeatable(true) % "filter items by name with regex",
 		((clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'"
 			& (clipp::option("--fuzz") & clipp::number("fuzz_factor").set(filter.pre_filter_fuzz_factor)) % "allow some variance in the pre-filter value checks (def: 0.05)"),

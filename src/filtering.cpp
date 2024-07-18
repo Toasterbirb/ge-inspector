@@ -75,9 +75,11 @@ namespace ge
 		// This variable is only really used if we are checking for alching profitability
 		u64 nature_rune_cost = filter.find_profitable_to_alch_items ? ge::item_cost("Nature rune") : 0;
 
-		// Convert the name contains filter to lowercase
-		std::transform(filter.name_contains.begin(), filter.name_contains.end(), filter.name_contains.begin(), [](unsigned char c) {
-			return std::tolower(c);
+		// Convert the name contains filters to lowercase
+		std::for_each(filter.name_contains.begin(), filter.name_contains.end(), [](std::string& str) {
+			std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
+				return std::tolower(c);
+			});
 		});
 
 		static const u8 all_category_id = ge::item_categories.at("All");
@@ -190,7 +192,9 @@ namespace ge
 					return std::tolower(c);
 				});
 
-				return lowercase_name.find(filter.name_contains) != std::string::npos;
+				return std::all_of(filter.name_contains.begin(), filter.name_contains.end(), [&lowercase_name](const std::string& str) {
+					return lowercase_name.find(str) != std::string::npos;
+				});
 			},
 
 			// Regex matching
