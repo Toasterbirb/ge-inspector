@@ -29,6 +29,13 @@ namespace ge
 		{
 			return value >= min && value <= max;
 		}
+
+		__attribute__((warn_unused_result))
+		constexpr bool is_in_range(const i64 value, const f32 fuzz) const
+		{
+			return value >= min - (min * fuzz)
+				&& value <= max + (max * fuzz);
+		}
 	};
 
 	enum class stat
@@ -61,6 +68,11 @@ namespace ge
 		std::string name_contains;
 		std::vector<std::string> regex_patterns;
 		u8 category = ge::item_categories.at("All");
+
+		// Group pre-filter data based on buy limits
+		std::unordered_map<u32, range> pre_filter_price;
+		std::unordered_map<u32, range> pre_filter_volume;
+		f32 pre_filter_fuzz_factor = 0.05;
 	};
 
 	std::vector<item> filter_items(const std::vector<item>& items, filter filter);

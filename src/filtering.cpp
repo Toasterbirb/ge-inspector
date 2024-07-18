@@ -70,10 +70,34 @@ namespace ge
 
 		const static std::vector<std::function<bool(const ge::item& item)>> filter_funcs = {
 			// Volume
-			[&](const ge::item& item) -> bool { return filter.volume.is_in_range(item.volume); },
+			[&](const ge::item& item) -> bool
+			{
+				if (!filter.pre_filter_volume.empty())
+				{
+					if (!filter.pre_filter_volume.contains(item.limit))
+						return false;
+
+					return filter.pre_filter_volume.at(item.limit)
+						.is_in_range(item.volume, filter.pre_filter_fuzz_factor);
+				}
+
+				return filter.volume.is_in_range(item.volume);
+			},
 
 			// Price
-			[&](const ge::item& item) -> bool { return filter.price.is_in_range(item.price); },
+			[&](const ge::item& item) -> bool
+			{
+				if (!filter.pre_filter_volume.empty())
+				{
+					if (!filter.pre_filter_price.contains(item.limit))
+						return false;
+
+					return filter.pre_filter_price.at(item.limit)
+						.is_in_range(item.price, filter.pre_filter_fuzz_factor);
+				}
+
+				return filter.price.is_in_range(item.price);
+			},
 
 			// Buy limit
 			[&](const ge::item& item) -> bool { return filter.limit.is_in_range(item.limit); },
@@ -93,7 +117,8 @@ namespace ge
 			},
 
 			// Volume over limit
-			[&](const ge::item& item) -> bool {
+			[&](const ge::item& item) -> bool
+			{
 				return filter.volume_over_limit
 					? item.volume >= item.limit
 					: true;
@@ -196,10 +221,6 @@ namespace ge
 			});
 		}
 
-		ge::range pre_price { std::numeric_limits<i64>::max(), 0 };
-		ge::range pre_volume { std::numeric_limits<i64>::max(), 0 };
-		ge::range pre_limit { std::numeric_limits<i64>::max(), 0 };
-
 		const auto set_min_max_to_range = [](ge::range& range, const i64& value)
 		{
 			if (value < range.min)
@@ -209,22 +230,31 @@ namespace ge
 				range.max = value;
 		};
 
+		constexpr range starting_range = { std::numeric_limits<i64>::max(), 0 };
+
 		for (const ge::item& item : pre_filtered_items)
 		{
-			set_min_max_to_range(pre_price, item.price);
-			set_min_max_to_range(pre_volume, item.volume);
-			set_min_max_to_range(pre_limit, item.limit);
+			if (!filter.pre_filter_price.contains(item.limit))
+				filter.pre_filter_price[item.limit] = starting_range;
+
+			if (!filter.pre_filter_volume.contains(item.limit))
+				filter.pre_filter_volume[item.limit] = starting_range;
+
+			set_min_max_to_range(filter.pre_filter_price.at(item.limit), item.price);
+			set_min_max_to_range(filter.pre_filter_volume.at(item.limit), item.volume);
 		}
 
-		const auto apply_ranges_not_changed_by_user = [](const ge::range src, ge::range& dst)
+		const auto apply_ranges_changed_by_user = [](const ge::range src, ge::range& dst)
 		{
-			dst.min = dst.is_min_set() ? dst.min : src.min;
-			dst.max = dst.is_max_set() ? dst.max : src.max;
+			dst.min = src.is_min_set() ? src.min : dst.min;
+			dst.max = src.is_max_set() ? src.max : dst.max;
 		};
 
-		apply_ranges_not_changed_by_user(pre_price, filter.price);
-		apply_ranges_not_changed_by_user(pre_volume, filter.volume);
-		apply_ranges_not_changed_by_user(pre_limit, filter.limit);
+		for (auto& [limit, price] : filter.pre_filter_price)
+			apply_ranges_changed_by_user(filter.price, price);
+
+		for (auto& [limit, volume] : filter.pre_filter_volume)
+			apply_ranges_changed_by_user(filter.volume, volume);
 
 		return filter;
 	}

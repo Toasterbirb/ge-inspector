@@ -89,7 +89,8 @@ int main(int argc, char** argv)
 		clipp::option("--index").set(print_index) % "print the indices of items",
 		(clipp::option("--name", "-n") & clipp::value("str", filter.name_contains)) % "filter items by name",
 		(clipp::option("--regex") & clipp::value("pattern", filter.regex_patterns)).repeatable(true) % "filter items by name with regex",
-		(clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'",
+		((clipp::option("--pre-filter") & clipp::value("items", pre_filter_item_names)) % "set base values for price, volume and limit based on different items\n\nthe item names should be given as a semicolon separated list like this 'Iron ore;Adamant bar;Feathers'"
+			& (clipp::option("--fuzz") & clipp::number("fuzz_factor").set(filter.pre_filter_fuzz_factor)) % "allow some variance in the pre-filter value checks (def: 0.05)"),
 		(clipp::option("--category", "-c") & clipp::number("category", filter.category)) % "filter items by category (see categories with --list-categories)",
 		(clipp::option("--min-price") & clipp::number("price", filter.price.min)) % "minimum price",
 		(clipp::option("--max-price") & clipp::number("price", filter.price.max)) % "maximum price",
