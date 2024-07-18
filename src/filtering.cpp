@@ -280,6 +280,8 @@ namespace ge
 		for (auto& [limit, volume] : filter.pre_filter_volume)
 			apply_ranges_changed_by_user(filter.volume, volume);
 
+		assert(filter.pre_filter_price.size() == filter.pre_filter_volume.size());
+
 		return filter;
 	}
 }
