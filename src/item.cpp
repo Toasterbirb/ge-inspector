@@ -1,9 +1,15 @@
-#include "Item.hpp"
 #include "CURL.hpp"
+#include "DB.hpp"
+#include "Graph.hpp"
+#include "Item.hpp"
+#include "PriceUtils.hpp"
+#include "PrintUtils.hpp"
 
 #include <algorithm>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <unordered_set>
 
 namespace ge
@@ -90,5 +96,47 @@ namespace ge
 
 		// Sort the item list with the sorting lambda
 		std::sort(items.begin(), items.end(), std::get<std::function<bool(const item& a, const item& b)>>(*sort_mode_it));
+	}
+
+	void print_item_info(item& item, const bool print_short_price, const bool print_terse_format, const bool print_price_history, const ge::colorscheme colorscheme)
+	{
+		constexpr u32 normal_info_column_width = 14;
+		const std::string separator = print_terse_format ? ";" : ":";
+
+		// Set the info column width to zero if printing in terse format
+		const u32 info_column_width = print_terse_format ? 0 : normal_info_column_width;
+
+		std::cout
+				<< std::left
+				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
+				<< std::setw(info_column_width) << "Item" + separator << item.name << '\n'
+				<< std::setw(info_column_width) << "Category" + separator << ge::category_id_to_str(item.category) << '\n'
+				<< std::setw(info_column_width) << "Price" + separator << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
+				<< std::setw(info_column_width) << "Limit" + separator << item.limit << '\n'
+				<< std::setw(info_column_width) << "Volume" + separator << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) ) << '\n'
+				<< std::setw(info_column_width) << "Total cost" + separator << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
+				<< std::setw(info_column_width) << "High alch" + separator << item.high_alch << '\n'
+				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
+				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
+				<< '\n';
+
+
+		if (print_price_history)
+		{
+			struct winsize w;
+			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+			const u64 day_count = (w.ws_col / 2) - 2;
+			std::vector<u64> price_history = ge::item_price_history(item, day_count);
+
+			const u64 min = *std::min_element(price_history.begin(), price_history.end());
+			const u64 max = *std::max_element(price_history.begin(), price_history.end());
+
+			std::cout << "\n - Price history -\n"
+				<< std::setw(info_column_width) << "Min price" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
+				<< std::setw(info_column_width) << "Max price" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n';
+
+			constexpr u8 graph_height = 8;
+			ge::draw_graph(graph_height, price_history);
+		}
 	}
 }

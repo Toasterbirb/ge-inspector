@@ -9,7 +9,6 @@
 #include "Random.hpp"
 #include "Types.hpp"
 
-#include <algorithm>
 #include <clipp.h>
 #include <iomanip>
 #include <iostream>
@@ -79,9 +78,9 @@ int main(int argc, char** argv)
 		 & clipp::option("--quiet", "-q").set(quiet_db_update) % "only update the db and don't print out any results"),
 		clipp::option("--list-categories").set(print_category_list) % "list all of the item categories",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
-		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
-		 & ((clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs")
-		 | (clipp::option("--history", "-h").set(print_price_history) % "print price history for the random item"))),
+		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
+		clipp::option("--terse", "-t").set(print_terse_format) % "print the item info in a way that is easier to parse with 3rd party programs (works only if printing info for a singular item)",
+		clipp::option("--history", "-h").set(print_price_history) % "print price history the item (works only if printing info for a singular item)",
 		clipp::option("--count").set(print_count) % "show result count at the end of the output",
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
@@ -222,47 +221,11 @@ int main(int argc, char** argv)
 		if (item.members == ge::members_item::unknown && check_member_status)
 			ge::update_item_member_status(item);
 
-		constexpr u32 normal_info_column_width = 14;
-		const std::string separator = print_terse_format ? ";" : ":";
-
-		// Set the info column width to zero if printing in terse format
-		const u32 info_column_width = print_terse_format ? 0 : normal_info_column_width;
-
-		std::cout
-				<< std::left
-				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
-				<< std::setw(info_column_width) << "Item" + separator << item.name << '\n'
-				<< std::setw(info_column_width) << "Category" + separator << ge::category_id_to_str(item.category) << '\n'
-				<< std::setw(info_column_width) << "Price" + separator << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) ) << '\n'
-				<< std::setw(info_column_width) << "Limit" + separator << item.limit << '\n'
-				<< std::setw(info_column_width) << "Volume" + separator << ( print_short_price ? ge::round_big_numbers(item.volume) : std::to_string(item.volume) ) << '\n'
-				<< std::setw(info_column_width) << "Total cost" + separator << ( print_short_price ? ge::round_big_numbers(item.limit * item.price) : std::to_string(item.limit * item.price) ) << '\n'
-				<< std::setw(info_column_width) << "High alch" + separator << item.high_alch << '\n'
-				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
-				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
-				<< '\n';
-
-
-		if (print_price_history)
-		{
-			struct winsize w;
-			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-			const u64 day_count = (w.ws_col / 2) - 2;
-			std::vector<u64> price_history = ge::item_price_history(item, day_count);
-
-			const u64 min = *std::min_element(price_history.begin(), price_history.end());
-			const u64 max = *std::max_element(price_history.begin(), price_history.end());
-
-			std::cout << "\n - Price history -\n"
-				<< std::setw(info_column_width) << "Min price" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
-				<< std::setw(info_column_width) << "Max price" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n';
-
-			constexpr u8 graph_height = 8;
-			ge::draw_graph(graph_height, price_history);
-		}
+		ge::print_item_info(item, print_short_price, print_terse_format, print_price_history, colorscheme);
 	}
-	// Print the results normally
-	else
+
+	// Print the results normally if there are any results to print
+	if (!pick_random_item && filtered_items.size() > 1)
 	{
 		// Sort the filtered list
 		if (sort_mode != ge::sort_mode::none)
@@ -326,6 +289,16 @@ int main(int argc, char** argv)
 		else
 			for (ge::item& item : filtered_items | std::views::reverse)
 				print_item_line(item);
+	}
+	else if (filtered_items.size() == 1)
+	{
+		ge::item& item = filtered_items.at(0);
+
+		if (item.members == ge::members_item::unknown && check_member_status)
+			ge::update_item_member_status(item);
+
+		// Print the information for the only item in the list
+		ge::print_item_info(item, print_short_price, print_terse_format, print_price_history, colorscheme);
 	}
 
 	if (print_count)

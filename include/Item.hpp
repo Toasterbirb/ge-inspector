@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Color.hpp"
 #include "Types.hpp"
 
 #include <array>
@@ -156,4 +157,5 @@ namespace ge
 	void from_json(const nlohmann::json& j, item& i);
 
 	void sort_items(std::vector<item>& items, const sort_mode mode);
+	void print_item_info(item& item, const bool print_short_price, const bool print_terse_format, const bool print_price_history, const ge::colorscheme colorscheme);
 }
