@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <numeric>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <unordered_set>
@@ -125,15 +126,21 @@ namespace ge
 		{
 			struct winsize w;
 			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-			const u64 day_count = (w.ws_col / 2) - 2;
+			const u64 day_count = w.ws_col - 2;
 			std::vector<u64> price_history = ge::item_price_history(item, day_count);
 
 			const u64 min = *std::min_element(price_history.begin(), price_history.end());
 			const u64 max = *std::max_element(price_history.begin(), price_history.end());
+			const u64 average = [&price_history]() -> u64
+			{
+				f64 total = std::accumulate(price_history.begin(), price_history.end(), 0);
+				return std::round(total / static_cast<f64>(price_history.size()));
+			}();
 
 			std::cout << "\n - Price history -\n"
-				<< std::setw(info_column_width) << "Min price" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
-				<< std::setw(info_column_width) << "Max price" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n';
+				<< std::setw(info_column_width) << "Min" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
+				<< std::setw(info_column_width) << "Max" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n'
+				<< std::setw(info_column_width) << "Average" + separator << ( print_short_price ? ge::round_big_numbers(average) : std::to_string(average) ) << '\n';
 
 			constexpr u8 graph_height = 8;
 			ge::draw_graph(graph_height, price_history);

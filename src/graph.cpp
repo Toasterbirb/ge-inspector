@@ -37,67 +37,25 @@ namespace ge
 			});
 		}
 
-
-
-		constexpr char symbol_up = '/';
-		constexpr char symbol_down = '\\';
-		constexpr char symbol_stationary = '_';
-		constexpr char symbol_turnaround_down = '^';
-		constexpr char symbol_turnaround_up = 'v';
-
 		constexpr char wall_char = '|';
 		constexpr char line_char = '-';
 
-		// Print the top line
-		for (size_t i = 0; i < normalized_values.size() + 2; ++i)
-			std::cout << line_char << line_char;
 		std::cout << '\n';
 
 		for (i8 i = height; i > -1; --i)
 		{
-			std::cout << wall_char;
-
 			for (i8 j = 0; j < normalized_values.size(); ++j)
 			{
-				if (normalized_values[j] == i)
+				if (normalized_values[j] != i)
 				{
-					const i8 cur_value = normalized_values[j];
-
-					const i8 prev_value = j == 0
-						? normalized_values[j]
-						: normalized_values[j - 1];
-
-					const i8 next_value = j == normalized_values.size() - 1
-						? normalized_values[j]
-						: normalized_values[j + 1];
-
-					const bool increasing = cur_value > prev_value && cur_value < next_value;
-					const bool decreasing = cur_value < prev_value && cur_value > next_value;
-					const bool stationary = cur_value == prev_value || cur_value == next_value;
-					const bool turnaround_up = prev_value == next_value && cur_value < prev_value;
-					const bool turnaround_down = prev_value == next_value && cur_value > prev_value;
-
-					const char symbol 	= symbol_up * increasing
-										+ symbol_down * decreasing
-										+ symbol_stationary * stationary
-										+ symbol_turnaround_up * turnaround_up
-										+ symbol_turnaround_down * turnaround_down;
-
-					std::cout << ' ' << symbol;
+					std::cout << "▒";
+					continue;
 				}
-				else
-				{
-					std::cout << "  ";
-				}
+
+				std::cout << "▀";
 			}
 
-			std::cout << "  " << wall_char << '\n';
+			std::cout << '\n';
 		}
-
-		// Print the bottom line
-		for (size_t i = 0; i < normalized_values.size() + 2; ++i)
-			std::cout << line_char << line_char;
-
-		std::cout << '\n';
 	}
 }

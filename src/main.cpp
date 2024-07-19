@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
 		clipp::option("--terse", "-t").set(print_terse_format) % "print the item info in a way that is easier to parse with 3rd party programs (works only if printing info for a singular item)",
-		clipp::option("--history", "-h").set(print_price_history) % "print price history the item (works only if printing info for a singular item)",
+		clipp::option("--history").set(print_price_history) % "print price history the item (works only if printing info for a singular item)",
 		clipp::option("--count").set(print_count) % "show result count at the end of the output",
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",

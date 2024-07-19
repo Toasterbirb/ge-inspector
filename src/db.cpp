@@ -4,6 +4,7 @@
 #include "PrintUtils.hpp"
 #include "Random.hpp"
 
+#include <algorithm>
 #include <assert.h>
 #include <chrono>
 #include <filesystem>
@@ -389,7 +390,8 @@ namespace ge
 	std::vector<u64> item_price_history(item& item, const u8 days)
 	{
 		std::vector<u64> prices;
-		std::vector<u64> trimmed_prices(days);
+		std::vector<u64> trimmed_prices;
+		u8 trimmed_size = days;
 
 		// Check if the value is cached and if the cached value is new enough to be re-used
 		const auto last_update = std::chrono::system_clock::time_point{ std::chrono::nanoseconds{ item.last_price_history_update } };
@@ -400,17 +402,29 @@ namespace ge
 
 		if (duration <= 24h)
 		{
-			prices = item.price_history;
-			std::copy(prices.end() - days, prices.end(), trimmed_prices.begin());
+			if (item.price_history.size() < days)
+				trimmed_size = item.price_history.size();
+
+			trimmed_prices.resize(trimmed_size);
+			std::copy(item.price_history.end() - trimmed_size, item.price_history.end(), trimmed_prices.begin());
 			return trimmed_prices;
 		}
 
 		const std::string url = std::format("https://secure.runescape.com/m=itemdb_rs/api/graph/{}.json", item.id);
-		nlohmann::json item_price_history = download_json(url, 0);
+		std::future<nlohmann::json> item_price_history_future = std::async(download_json, url, 0);
+
+		do
+		{
+			std::cout << "\rDownloading graph data " << ge::spinner() << std::flush;
+		} while (item_price_history_future.wait_for(std::chrono::milliseconds(200)) != std::future_status::ready);
+
+		nlohmann::json item_price_history = item_price_history_future.get();
 
 		std::transform(item_price_history["daily"].begin(), item_price_history["daily"].end(), std::back_inserter(prices), [](const u64 value) {
 			return value;
 		});
+
+		ge::clear_current_line();
 
 		// Cache the price history
 		item.price_history = prices;
@@ -418,7 +432,11 @@ namespace ge
 		update_item(item);
 		write_db();
 
-		std::copy(prices.end() - days, prices.end(), trimmed_prices.begin());
+		if (prices.size() < days)
+			trimmed_size = prices.size();
+
+		trimmed_prices.resize(trimmed_size);
+		std::copy(prices.end() - trimmed_size, prices.end(), trimmed_prices.begin());
 
 		return trimmed_prices;
 	}
