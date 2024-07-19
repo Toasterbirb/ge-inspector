@@ -1,4 +1,5 @@
 #include "Item.hpp"
+#include "CURL.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -18,6 +19,8 @@ namespace ge
 			{ "high_alch", i.high_alch },
 			{ "members", i.members },
 			{ "category", i.category },
+			{ "price_history", i.price_history },
+			{ "prev_price_hist_update", i.last_price_history_update },
 		};
 	}
 
@@ -31,6 +34,8 @@ namespace ge
 		j.at("high_alch").get_to(i.high_alch);
 		j.at("members").get_to(i.members);
 		j.at("category").get_to(i.category);
+		j.at("price_history").get_to(i.price_history);
+		j.at("prev_price_hist_update").get_to(i.last_price_history_update);
 	}
 
 	std::string category_id_to_str(const u8 category_id)

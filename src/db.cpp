@@ -298,6 +298,8 @@ namespace ge
 								item.members = ge::members_item::yes;
 							else
 								item.members = ge::members_item::no;
+
+							item.category = category_id;
 						}
 					}
 
@@ -382,5 +384,42 @@ namespace ge
 		});
 
 		return (*it)["price"];
+	}
+
+	std::vector<u64> item_price_history(item& item, const u8 days)
+	{
+		std::vector<u64> prices;
+		std::vector<u64> trimmed_prices(days);
+
+		// Check if the value is cached and if the cached value is new enough to be re-used
+		const auto last_update = std::chrono::system_clock::time_point{ std::chrono::nanoseconds{ item.last_price_history_update } };
+		const auto now = std::chrono::system_clock::now();
+		const auto duration = std::chrono::duration(now - last_update);
+
+		using namespace std::chrono_literals;
+
+		if (duration <= 24h)
+		{
+			prices = item.price_history;
+			std::copy(prices.end() - days, prices.end(), trimmed_prices.begin());
+			return trimmed_prices;
+		}
+
+		const std::string url = std::format("https://secure.runescape.com/m=itemdb_rs/api/graph/{}.json", item.id);
+		nlohmann::json item_price_history = download_json(url, 0);
+
+		std::transform(item_price_history["daily"].begin(), item_price_history["daily"].end(), std::back_inserter(prices), [](const u64 value) {
+			return value;
+		});
+
+		// Cache the price history
+		item.price_history = prices;
+		item.last_price_history_update = std::chrono::system_clock::now().time_since_epoch().count();
+		update_item(item);
+		write_db();
+
+		std::copy(prices.end() - days, prices.end(), trimmed_prices.begin());
+
+		return trimmed_prices;
 	}
 }

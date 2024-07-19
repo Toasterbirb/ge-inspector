@@ -1,16 +1,21 @@
+#include "CURL.hpp"
 #include "Color.hpp"
 #include "DB.hpp"
 #include "Filtering.hpp"
+#include "Graph.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
 #include "PrintUtils.hpp"
 #include "Random.hpp"
 #include "Types.hpp"
 
+#include <algorithm>
 #include <clipp.h>
 #include <iomanip>
 #include <iostream>
 #include <ranges>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 
 int main(int argc, char** argv)
@@ -26,6 +31,7 @@ int main(int argc, char** argv)
 	bool print_no_header = false;
 	bool print_index = false;
 	bool print_terse_format = false;
+	bool print_price_history = false;
 	bool print_category_list = false;
 	bool print_count = false;
 
@@ -74,7 +80,8 @@ int main(int argc, char** argv)
 		clipp::option("--list-categories").set(print_category_list) % "list all of the item categories",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
 		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
-		 & clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs"),
+		 & ((clipp::option("--terse", "-t").set(print_terse_format) % "print the random result in a way that is easier to parse with 3rd party programs")
+		 | (clipp::option("--history", "-h").set(print_price_history) % "print price history for the random item"))),
 		clipp::option("--count").set(print_count) % "show result count at the end of the output",
 		clipp::option("--f2p", "-f").set(member_filter, ge::members_item::no) % "look for f2p items",
 		clipp::option("--p2p", "-p").set(member_filter, ge::members_item::yes) % "look for p2p items",
@@ -234,6 +241,25 @@ int main(int argc, char** argv)
 				<< std::setw(info_column_width) << "Members" + separator << ge::members_item_str.at(item.members)
 				<< ( colorscheme != ge::colorscheme::white ? "\033[0m" : "" )
 				<< '\n';
+
+
+		if (print_price_history)
+		{
+			struct winsize w;
+			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+			const u64 day_count = (w.ws_col / 2) - 2;
+			std::vector<u64> price_history = ge::item_price_history(item, day_count);
+
+			const u64 min = *std::min_element(price_history.begin(), price_history.end());
+			const u64 max = *std::max_element(price_history.begin(), price_history.end());
+
+			std::cout << "\n - Price history -\n"
+				<< std::setw(info_column_width) << "Min price" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
+				<< std::setw(info_column_width) << "Max price" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n';
+
+			constexpr u8 graph_height = 8;
+			ge::draw_graph(graph_height, price_history);
+		}
 	}
 	// Print the results normally
 	else

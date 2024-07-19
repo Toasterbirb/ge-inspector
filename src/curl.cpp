@@ -58,10 +58,11 @@ namespace ge
 				{
 					return nlohmann::json::parse(read_buffer);
 				}
-				catch (nlohmann::json::exception e)
+				catch (const nlohmann::json::exception& e)
 				{
 					std::cout << "\nException happened when trying to access URL: " << url << "\n";
-					std::cout << "Error: " << e.what() << "\n";
+					std::cout << "Error: " << e.what() << '\n';
+					std::cout << "Server response: " << read_buffer << '\n';
 					exit(1);
 				}
 			}

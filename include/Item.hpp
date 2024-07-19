@@ -3,6 +3,7 @@
 #include "Types.hpp"
 
 #include <array>
+#include <chrono>
 #include <functional>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -33,6 +34,9 @@ namespace ge
 		i32 high_alch{};
 		members_item members = members_item::unknown;
 		u8 category = -1;
+
+		std::vector<u64> price_history;
+		u64 last_price_history_update{};
 	};
 
 	const static inline std::string all_category = "all";
