@@ -126,7 +126,7 @@ namespace ge
 		{
 			struct winsize w;
 			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-			const u64 day_count = w.ws_col - 2;
+			const u64 day_count = w.ws_col;
 			std::vector<u64> price_history = ge::item_price_history(item, day_count);
 
 			const u64 min = *std::min_element(price_history.begin(), price_history.end());
