@@ -101,7 +101,7 @@ namespace ge
 
 	void print_item_info(item& item, const bool print_short_price, const bool print_terse_format, const bool print_price_history, const ge::colorscheme colorscheme)
 	{
-		constexpr u32 normal_info_column_width = 14;
+		constexpr u32 normal_info_column_width = 15;
 		const std::string separator = print_terse_format ? ";" : ":";
 
 		// Set the info column width to zero if printing in terse format
@@ -131,16 +131,31 @@ namespace ge
 
 			const u64 min = *std::min_element(price_history.begin(), price_history.end());
 			const u64 max = *std::max_element(price_history.begin(), price_history.end());
+
 			const u64 average = [&price_history]() -> u64
 			{
 				f64 total = std::accumulate(price_history.begin(), price_history.end(), 0);
 				return std::round(total / static_cast<f64>(price_history.size()));
 			}();
 
+			const auto calc_change = [&price_history](const u8 days) -> f32
+			{
+				const i64 price_a = *(price_history.end() - days);
+				const i64 price_b = *std::prev(price_history.end());
+
+				assert(price_a != 0);
+				return (price_b - price_a) / static_cast<f64>(price_a);
+			};
+
+			const f32 last_10_day_change = calc_change(10);
+			const f32 last_30_day_change = calc_change(30);
+
 			std::cout << "\n - Price history -\n"
 				<< std::setw(info_column_width) << "Min" + separator << ( print_short_price ? ge::round_big_numbers(min) : std::to_string(min) ) << '\n'
 				<< std::setw(info_column_width) << "Max" + separator << ( print_short_price ? ge::round_big_numbers(max) : std::to_string(max) ) << '\n'
-				<< std::setw(info_column_width) << "Average" + separator << ( print_short_price ? ge::round_big_numbers(average) : std::to_string(average) ) << '\n';
+				<< std::setw(info_column_width) << "Average" + separator << ( print_short_price ? ge::round_big_numbers(average) : std::to_string(average) ) << '\n'
+				<< std::setw(info_column_width) << "10 day change" + separator << last_10_day_change * 100 << "%\n"
+				<< std::setw(info_column_width) << "30 day change" + separator << last_30_day_change * 100 << "%\n";
 
 			constexpr u8 graph_height = 8;
 			ge::draw_graph(graph_height, price_history);
