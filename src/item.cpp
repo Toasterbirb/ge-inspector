@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <numeric>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <unordered_set>
@@ -131,9 +130,11 @@ namespace ge
 			const u64 min = *std::min_element(price_history.begin(), price_history.end());
 			const u64 max = *std::max_element(price_history.begin(), price_history.end());
 
-			const u64 average = [&price_history]() -> u64
+			const i64 average = [&price_history]() -> i64
 			{
-				f64 total = std::accumulate(price_history.begin(), price_history.end(), 0);
+				i64 total = 0;
+				for (const i64 price : price_history) total += price;
+
 				return std::round(total / static_cast<f64>(price_history.size()));
 			}();
 

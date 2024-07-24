@@ -7,11 +7,11 @@
 namespace ge
 {
 	__attribute__((warn_unused_result, const))
-	std::string round_big_numbers(const u64 value);
+	std::string round_big_numbers(const i64 value);
 
 	__attribute__((warn_unused_result, const))
-	std::string clean_decimals(const double value);
+	std::string clean_decimals(const f64 value);
 
 	__attribute__((warn_unused_result, const))
-	u64 round(const u64 value, const i8 decimal_points);
+	i64 round(const i64 value, const i8 decimal_points);
 }

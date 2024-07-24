@@ -4,20 +4,24 @@
 
 namespace ge
 {
-	std::string round_big_numbers(const u64 value)
+	std::string round_big_numbers(const i64 value)
 	{
-		if (value > 1'000'000'000)
-			return clean_decimals(round(value, -6) / 1'000'000'000.0) + "b";
-		else if (value > 1'000'000)
-			return clean_decimals(round(value, -4) / 1'000'000.0) + "m";
-		else if (value > 1000)
-			return clean_decimals(round(value, -1) / 1000.0) + "k";
+		constexpr i64 billion = 1'000'000'000;
+		constexpr i64 million = 1'000'000;
+		constexpr i64 thousand = 1000;
+
+		if (value > billion || value < -billion)
+			return clean_decimals(round(value, -6) / static_cast<f64>(billion)) + "b";
+		else if (value > million || value < -million)
+			return clean_decimals(round(value, -4) / static_cast<f64>(million)) + "m";
+		else if (value > thousand || value < -thousand)
+			return clean_decimals(round(value, -1) / static_cast<f64>(thousand)) + "k";
 
 		/* Small enough value to not need rounding */
 		return std::to_string(value);
 	}
 
-	std::string clean_decimals(const double value)
+	std::string clean_decimals(const f64 value)
 	{
 		std::string result = std::to_string(value);
 		const size_t non_zero_pos = result.find_last_not_of('0');
@@ -32,7 +36,7 @@ namespace ge
 		return result;
 	}
 
-	u64 round(const u64 value, const i8 decimal_points)
+	i64 round(const i64 value, const i8 decimal_points)
 	{
 		return std::round(value * std::pow(10, decimal_points)) / static_cast<f64>(std::pow(10, decimal_points));
 	}
