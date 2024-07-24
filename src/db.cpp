@@ -256,58 +256,47 @@ namespace ge
 			nlohmann::json& db_items = DATABASE["items"];
 			nlohmann::json category_json;
 			u8 page = 1;
-			constexpr u8 pages_to_download_at_once = 2;
+			constexpr u8 max_items_per_page = 12;
 
 			do
 			{
-				std::vector<std::future<nlohmann::json>> category_item_pages;
+				const std::string json_url = std::format("https://secure.runescape.com/m=itemdb_rs/api/catalogue/items.json?category={}&alpha={}&page={}",
+						category_id, static_cast<char>(std::tolower(item.name.at(0))), page);
 
-				for (u8 i = 0; i < pages_to_download_at_once; ++i)
+				category_json = download_json(json_url, 0);
+				++page;
+
+				for (const nlohmann::json& category_item : category_json["items"])
 				{
-					const std::string json_url = std::format("https://secure.runescape.com/m=itemdb_rs/api/catalogue/items.json?category={}&alpha={}&page={}",
-							category_id, static_cast<char>(std::tolower(item.name.at(0))), page);
+					auto item_it = std::find_if(db_items.begin(), db_items.end(), [category_item](const nlohmann::json& json_item){
+						return json_item["id"] == category_item["id"];
+					});
 
-					category_item_pages.emplace_back(std::async(std::launch::async, download_json, json_url, 0));
-					++page;
-				}
+					if (item_it == db_items.end())
+						continue;
 
+					if (category_item["members"] == "true")
+						(*item_it)["members"] = ge::members_item::yes;
+					else
+						(*item_it)["members"] = ge::members_item::no;
 
-				for (u8 i = 0; i < category_item_pages.size(); ++i)
-				{
-					category_json = category_item_pages.at(i).get();
+					(*item_it)["category"] = category_id;
 
-					for (const nlohmann::json& category_item : category_json["items"])
+					// Update the item we were looking for originally (if it was found)
+					if ((*item_it)["id"] == item.id)
 					{
-						auto item_it = std::find_if(db_items.begin(), db_items.end(), [category_item](const nlohmann::json& json_item){
-							return json_item["id"] == category_item["id"];
-						});
-
-						if (item_it == db_items.end())
-							continue;
-
 						if (category_item["members"] == "true")
-							(*item_it)["members"] = ge::members_item::yes;
+							item.members = ge::members_item::yes;
 						else
-							(*item_it)["members"] = ge::members_item::no;
+							item.members = ge::members_item::no;
 
-						(*item_it)["category"] = category_id;
-
-						// Update the item we were looking for originally (if it was found)
-						if ((*item_it)["id"] == item.id)
-						{
-							if (category_item["members"] == "true")
-								item.members = ge::members_item::yes;
-							else
-								item.members = ge::members_item::no;
-
-							item.category = category_id;
-						}
+						item.category = category_id;
 					}
-
-					// Print dots to show progress
-					std::cout << '.' << std::flush;
 				}
-			} while (!category_json["items"].empty());
+
+				// Print dots to show progress
+				std::cout << '.' << std::flush;
+			} while (category_json["items"].size() == max_items_per_page);
 		}
 
 		// If no data was found for the item, mark it as such
