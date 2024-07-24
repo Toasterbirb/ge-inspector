@@ -263,7 +263,12 @@ namespace ge
 				const std::string json_url = std::format("https://secure.runescape.com/m=itemdb_rs/api/catalogue/items.json?category={}&alpha={}&page={}",
 						category_id, static_cast<char>(std::tolower(item.name.at(0))), page);
 
-				category_json = download_json(json_url, 0);
+				std::future<nlohmann::json> category_json_future = std::async(std::launch::async, download_json, json_url, 0);
+
+				constexpr std::chrono::duration rate_limit_wait_duration = std::chrono::milliseconds(100);
+				ge::future_spinner(category_json_future, rate_limit_wait_duration);
+
+				category_json = category_json_future.get();
 				++page;
 
 				for (const nlohmann::json& category_item : category_json["items"])
