@@ -278,7 +278,6 @@ int main(int argc, char** argv)
 
 			std::cout
 				<< ( colorscheme != ge::colorscheme::white ? "\033[" + ge::next_color(colorscheme) + "m" : "" )
-				<< std::left
 				<< std::setw(print_index ? index_width : 0) << ( print_index ? std::to_string(index) : "" )
 				<< std::setw(item.name.size() < name_width ? name_width : item.name.size() + 1) << item.name
 				<< std::setw(price_width) << ( print_short_price ? ge::round_big_numbers(item.price) : std::to_string(item.price) )
@@ -292,6 +291,8 @@ int main(int argc, char** argv)
 
 			++index;
 		};
+
+		std::cout << std::left;
 
 		if (!invert_sort)
 			for (ge::item& item : filtered_items)
