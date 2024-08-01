@@ -4,3 +4,6 @@
 [submodule "vendor/json"]
 	path = vendor/json
 	url = https://github.com/nlohmann/json
+[submodule "vendor/term_chart"]
+	path = vendor/term_chart
+	url = https://github.com/Toasterbirb/term_chart

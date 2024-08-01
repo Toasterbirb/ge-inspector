@@ -18,7 +18,9 @@ include_directories(vendor/clipp/include)
 add_subdirectory(vendor/json)
 include_directories(vendor/json/include)
 
-include_directories(./include ./vendor)
+include_directories(vendor/term_chart/include)
+
+include_directories(./include)
 file(GLOB SRC_FILES ./src/*)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME} clipp curl)

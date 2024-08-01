@@ -1,6 +1,5 @@
 #include "CURL.hpp"
 #include "DB.hpp"
-#include "Graph.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
 
@@ -8,6 +7,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sys/ioctl.h>
+#include <term_chart.hpp>
 #include <unistd.h>
 #include <unordered_set>
 
@@ -158,7 +158,7 @@ namespace ge
 				<< std::setw(info_column_width) << "30 day change" + separator << last_30_day_change * 100 << "%\n";
 
 			constexpr u8 graph_height = 8;
-			ge::draw_graph(graph_height, price_history);
+			std::cout << '\n' << term_chart::render(graph_height, price_history);
 		}
 	}
 }

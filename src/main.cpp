@@ -2,7 +2,6 @@
 #include "Color.hpp"
 #include "DB.hpp"
 #include "Filtering.hpp"
-#include "Graph.hpp"
 #include "Item.hpp"
 #include "PriceUtils.hpp"
 #include "PrintUtils.hpp"
