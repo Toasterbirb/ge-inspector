@@ -72,7 +72,7 @@ namespace ge
 		for (const auto& [name, id] : sorted_category_list)
 		{
 			// Skip duplicate categories
-			if (duplicate_category_names.contains(name))
+			if (duplicate_category_names.contains(name)) [[unlikely]]
 				continue;
 
 			std::cout << "[" << std::setw(2) << static_cast<i32>(id) << "] " << name << "\n";
@@ -90,7 +90,7 @@ namespace ge
 		});
 
 		assert(sort_mode_it != sorting_modes.end());
-		if (sort_mode_it == sorting_modes.end())
+		if (sort_mode_it == sorting_modes.end()) [[unlikely]]
 			return;
 
 		// Sort the item list with the sorting lambda

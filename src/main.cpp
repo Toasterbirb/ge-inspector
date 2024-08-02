@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 		(clipp::option("--color") & clipp::one_of(colorscheme_commands)) % "change the colorscheme of the output to something other than white"
 	);
 
-	if (!clipp::parse(argc, argv, cli))
+	if (!clipp::parse(argc, argv, cli)) [[unlikely]]
 	{
 		std::cout << "## Missing or invalid arguments ##\n\n"
 			<< "Usage: ge-inspector [options...]\n"
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	if (show_help)
+	if (show_help) [[unlikely]]
 	{
 		const auto fmt = clipp::doc_formatting{}.doc_column(40);
 
@@ -131,11 +131,11 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (update_db)
+	if (update_db) [[unlikely]]
 		ge::update_db();
 
 	// Quit early if only a DB update was requested
-	if (quiet_db_update)
+	if (quiet_db_update) [[unlikely]]
 		return 0;
 
 	if (print_category_list)
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 	// Pick a random item from results
 	if (pick_random_item)
 	{
-		if (filtered_items.empty())
+		if (filtered_items.empty()) [[unlikely]]
 		{
 			std::cout << "No results were found. Please try another query\n";
 			return 1;
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 				item = filtered_items.at(rand() % filtered_items.size());
 
 				// Check if the item is a members item
-				if (ge::update_item_member_status(item))
+				if (ge::update_item_member_status(item)) [[unlikely]]
 				{
 					ge::update_item(item);
 					ge::update_filtered_item_data(filtered_items);
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 			}
 			ge::clear_current_line();
 
-			if (checked_item_count >= max_checked_items)
+			if (checked_item_count >= max_checked_items) [[unlikely]]
 				std::cout << "Reached the maximum amount of items to check. Try again with different search options\n";
 		}
 
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
 	}
 
 	// Print the results normally if there are any results to print
-	if (!pick_random_item && filtered_items.size() > 1)
+	if (!pick_random_item && filtered_items.size() > 1) [[likely]]
 	{
 		// Sort the filtered list
 		if (sort_mode != ge::sort_mode::none)
@@ -249,7 +249,7 @@ int main(int argc, char** argv)
 		constexpr u8 high_alch_width = 12;
 		constexpr u8 members_width = 10;
 
-		if (!print_no_header)
+		if (!print_no_header) [[unlikely]]
 		{
 			std::cout << std::left
 				<< std::setw(print_index ? index_width : 0) << ( print_index ? "Index" : "" )
@@ -264,9 +264,9 @@ int main(int argc, char** argv)
 		}
 
 		u16 index = 0;
-		const auto print_item_line = [&](ge::item& item)
+		const auto print_item_line = [=, &filtered_items, &index](ge::item& item)
 		{
-			if (check_member_status && ge::update_item_member_status(item))
+			if (check_member_status && ge::update_item_member_status(item)) [[unlikely]]
 				ge::update_filtered_item_data(filtered_items);
 
 			// Handle members status filters
@@ -300,11 +300,11 @@ int main(int argc, char** argv)
 			for (ge::item& item : filtered_items | std::views::reverse)
 				print_item_line(item);
 	}
-	else if (filtered_items.size() == 1)
+	else if (filtered_items.size() == 1) [[unlikely]]
 	{
 		ge::item& item = filtered_items.at(0);
 
-		if (item.members == ge::members_item::unknown && check_member_status)
+		if (item.members == ge::members_item::unknown && check_member_status) [[unlikely]]
 			ge::update_item_member_status(item);
 
 		// Print the information for the only item in the list

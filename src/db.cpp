@@ -280,7 +280,7 @@ namespace ge
 					if (item_it == db_items.end())
 						continue;
 
-					if (category_item["members"] == "true")
+					if (category_item["members"] == "true") [[likely]]
 						(*item_it)["members"] = ge::members_item::yes;
 					else
 						(*item_it)["members"] = ge::members_item::no;
@@ -288,9 +288,9 @@ namespace ge
 					(*item_it)["category"] = category_id;
 
 					// Update the item we were looking for originally (if it was found)
-					if ((*item_it)["id"] == item.id)
+					if ((*item_it)["id"] == item.id) [[unlikely]]
 					{
-						if (category_item["members"] == "true")
+						if (category_item["members"] == "true") [[likely]]
 							item.members = ge::members_item::yes;
 						else
 							item.members = ge::members_item::no;
@@ -330,7 +330,7 @@ namespace ge
 	{
 		std::fstream db_file(db_path, std::ios::in);
 
-		if (!db_file.is_open())
+		if (!db_file.is_open()) [[unlikely]]
 		{
 			std::cout << "No database file was found. Downloading the required data and creating a new one...\n";
 			init_db();
@@ -357,7 +357,7 @@ namespace ge
 		for (ge::item& item : items)
 		{
 			// Skip items that already have a known membership status
-			if (item.members != ge::members_item::unknown)
+			if (item.members != ge::members_item::unknown) [[likely]]
 				continue;
 
 			while (db_index < DATABASE["items"].size() && item.id != DATABASE["items"][db_index]["id"])

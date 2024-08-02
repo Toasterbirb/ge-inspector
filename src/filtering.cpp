@@ -24,17 +24,17 @@ namespace ge
 	// fragmentation if the difference in limits is very small
 	u32 buy_limit_group(const u32 buy_limit)
 	{
-		if (buy_limit <= 8) return 8;
+		if (buy_limit <= 8) [[unlikely]] return 8;
 		if (buy_limit <= 10) return 10;
 		if (buy_limit <= 50) return 50;
 		if (buy_limit <= 100) return 100;
-		if (buy_limit <= 500) return 500;
-		if (buy_limit <= 1000) return 1000;
-		if (buy_limit <= 2500) return 2500;
-		if (buy_limit <= 5000) return 5000;
+		if (buy_limit <= 500) [[unlikely]] return 500;
+		if (buy_limit <= 1000) [[likely]] return 1000;
+		if (buy_limit <= 2500) [[unlikely]] return 2500;
+		if (buy_limit <= 5000) [[likely]] return 5000;
 		if (buy_limit <= 12000) return 12000;
-		if (buy_limit <= 25000) return 25000;
-		if (buy_limit <= 50000) return 50000;
+		if (buy_limit <= 25000) [[likely]] return 25000;
+		if (buy_limit <= 50000) [[unlikely]] return 50000;
 
 		return buy_limit;
 	}
@@ -61,7 +61,7 @@ namespace ge
 				value = item.high_alch;
 				break;
 
-			case stat::none:
+			case stat::none: [[unlikely]]
 				assert(true == false && "This code path shouldn't get reached");
 				break;
 		}
@@ -91,13 +91,13 @@ namespace ge
 
 		const static std::vector<std::function<bool(const ge::item& item)>> filter_funcs = {
 			// Volume
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) noexcept -> bool
 			{
 				if (!filter.pre_filter_volume.empty())
 				{
 					const u32 limit_group = buy_limit_group(item.limit);
 
-					if (!filter.pre_filter_volume.contains(limit_group))
+					if (!filter.pre_filter_volume.contains(limit_group)) [[likely]]
 						return false;
 
 					return filter.pre_filter_volume.at(limit_group)
@@ -108,13 +108,13 @@ namespace ge
 			},
 
 			// Price
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) noexcept -> bool
 			{
 				if (!filter.pre_filter_volume.empty())
 				{
 					const u32 limit_group = buy_limit_group(item.limit);
 
-					if (!filter.pre_filter_price.contains(limit_group))
+					if (!filter.pre_filter_price.contains(limit_group)) [[likely]]
 						return false;
 
 					return filter.pre_filter_price.at(limit_group)
@@ -125,16 +125,16 @@ namespace ge
 			},
 
 			// Buy limit
-			[&](const ge::item& item) -> bool { return filter.limit.is_in_range(item.limit); },
+			[&filter](const ge::item& item) noexcept -> bool { return filter.limit.is_in_range(item.limit); },
 
 			// High alch
-			[&](const ge::item& item) -> bool { return filter.alch.is_in_range(item.high_alch); },
+			[&filter](const ge::item& item) noexcept -> bool { return filter.alch.is_in_range(item.high_alch); },
 
 			// Cost
-			[&](const ge::item& item) -> bool { return filter.cost.is_in_range(item.price * item.limit); },
+			[&filter](const ge::item& item) noexcept -> bool { return filter.cost.is_in_range(item.price * item.limit); },
 
 			// Category matching
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) noexcept -> bool
 			{
 				return filter.category == all_category_id
 					? true
@@ -142,7 +142,7 @@ namespace ge
 			},
 
 			// Volume over limit
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) noexcept -> bool
 			{
 				return filter.volume_over_limit
 					? item.volume >= item.limit
@@ -150,7 +150,7 @@ namespace ge
 			},
 
 			// Profitable to alch
-			[&](const ge::item& item) -> bool
+			[&filter, nature_rune_cost](const ge::item& item) noexcept -> bool
 			{
 				return filter.find_profitable_to_alch_items
 					? (item.price + nature_rune_cost) < item.high_alch
@@ -158,7 +158,7 @@ namespace ge
 			},
 
 			// Minimum profit
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) noexcept -> bool
 			{
 				if (filter.min_margin_percent == 0 || filter.min_margin_profit_goal == 0)
 					return true;
@@ -167,7 +167,7 @@ namespace ge
 			},
 
 			// Stat ratio filter
-			[&](const ge::item& item) -> bool
+			[&filter, ratio_filtering_enabled](const ge::item& item) noexcept -> bool
 			{
 				if (!ratio_filtering_enabled)
 					return true;
@@ -179,7 +179,7 @@ namespace ge
 			},
 
 			// Name filter
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) -> bool
 			{
 				// Check if the name filtering was used
 				if (filter.name_contains.empty())
@@ -198,14 +198,14 @@ namespace ge
 			},
 
 			// Regex matching
-			[&](const ge::item& item) -> bool
+			[&filter](const ge::item& item) -> bool
 			{
 				// Check if regex matching was used
-				if (filter.regex_patterns.empty())
+				if (filter.regex_patterns.empty()) [[likely]]
 					return true;
 
 				// Check if all regex ptterns match
-				return std::all_of(filter.regex_patterns.begin(), filter.regex_patterns.end(), [&](const std::string& pattern){
+				return std::all_of(filter.regex_patterns.begin(), filter.regex_patterns.end(), [&item](const std::string& pattern){
 					return std::regex_match(item.name, std::regex(pattern));
 				});
 			}
@@ -263,10 +263,10 @@ namespace ge
 		{
 			const u32 limit_group = buy_limit_group(item.limit);
 
-			if (!filter.pre_filter_price.contains(limit_group))
+			if (!filter.pre_filter_price.contains(limit_group)) [[unlikely]]
 				filter.pre_filter_price[limit_group] = starting_range;
 
-			if (!filter.pre_filter_volume.contains(limit_group))
+			if (!filter.pre_filter_volume.contains(limit_group)) [[unlikely]]
 				filter.pre_filter_volume[limit_group] = starting_range;
 
 			set_min_max_to_range(filter.pre_filter_price.at(limit_group), item.price);

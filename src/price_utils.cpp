@@ -10,11 +10,11 @@ namespace ge
 		constexpr i64 million = 1'000'000;
 		constexpr i64 thousand = 1000;
 
-		if (value > billion || value < -billion)
+		if (value > billion || value < -billion) [[unlikely]]
 			return clean_decimals(round(value, -6) / static_cast<f64>(billion)) + "b";
-		else if (value > million || value < -million)
+		else if (value > million || value < -million) [[likely]]
 			return clean_decimals(round(value, -4) / static_cast<f64>(million)) + "m";
-		else if (value > thousand || value < -thousand)
+		else if (value > thousand || value < -thousand) [[likely]]
 			return clean_decimals(round(value, -1) / static_cast<f64>(thousand)) + "k";
 
 		/* Small enough value to not need rounding */
@@ -30,7 +30,7 @@ namespace ge
 			result.erase(non_zero_pos + 1, result.size() - non_zero_pos - 1);
 
 		/* Check if the last char is a dot */
-		if (result[result.size() - 1] == '.')
+		if (result[result.size() - 1] == '.') [[unlikely]]
 			result.erase(result.size() - 1, 1);
 
 		return result;

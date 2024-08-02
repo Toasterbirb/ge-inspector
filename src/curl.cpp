@@ -38,7 +38,7 @@ namespace ge
 			// Replace all non-ascii chars with underscores
 			for (size_t i = 0; i < read_buffer.size(); ++i)
 			{
-				if (read_buffer[i] < 0)
+				if (read_buffer[i] < 0) [[unlikely]]
 					read_buffer[i] = '_';
 			}
 
