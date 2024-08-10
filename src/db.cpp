@@ -381,11 +381,11 @@ namespace ge
 		return (*it)["price"];
 	}
 
-	std::vector<u64> item_price_history(item& item, const u8 days)
+	std::vector<u64> item_price_history(item& item, const u64 days)
 	{
 		std::vector<u64> prices;
 		std::vector<u64> trimmed_prices;
-		u8 trimmed_size = days;
+		u64 trimmed_size = days;
 
 		// Check if the value is cached and if the cached value is new enough to be re-used
 		const auto last_update = std::chrono::system_clock::time_point{ std::chrono::nanoseconds{ item.last_price_history_update } };

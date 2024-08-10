@@ -22,5 +22,5 @@ namespace ge
 	u64 item_cost(const std::string& name);
 
 	// Get the price history of an item for the past x amount of days
-	std::vector<u64> item_price_history(item& item, const u8 days);
+	std::vector<u64> item_price_history(item& item, const u64 days);
 }
