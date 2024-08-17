@@ -1,3 +1,4 @@
+#include "APIBulkData.hpp"
 #include "CURL.hpp"
 #include "DB.hpp"
 #include "Item.hpp"
@@ -29,60 +30,30 @@ namespace ge
 	using namespace std::chrono_literals;
 	constexpr std::chrono::duration update_cooldown_time = 1h;
 
-	constexpr char price_json_url[] = "https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson";
-	constexpr char id_json_url[] = "https://runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson";
-	constexpr char limit_json_url[] = "https://runescape.wiki/?title=Module:GELimits/data.json&action=raw&ctype=application%2Fjson";
-	constexpr char volume_json_url[] = "https://runescape.wiki/?title=Module:GEVolumes/data.json&action=raw&ctype=application%2Fjson";
-	constexpr char high_alch_json_url[] = "https://runescape.wiki/?title=Module:GEHighAlchs/data.json&action=raw&ctype=application%2Fjson";
-
 	constexpr char item_details_json_url[] = "https://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item=";
 
 	void init_db()
 	{
-		std::future<nlohmann::json> price_data_future = std::async(std::launch::async,
-				download_json, price_json_url, 0);
-
-		std::future<nlohmann::json> id_data_future = std::async(std::launch::async,
-				download_json, id_json_url, 0);
-
-		std::future<nlohmann::json> limit_data_future = std::async(std::launch::async,
-				download_json, limit_json_url, 0);
-
-		std::future<nlohmann::json> volume_data_future = std::async(std::launch::async,
-				download_json, volume_json_url, 0);
-
-		std::future<nlohmann::json> high_alch_data_future = std::async(std::launch::async,
-				download_json, high_alch_json_url, 0);
+		api_bulk_data api_data;
 
 		nlohmann::json db;
 
 		// Process the data
 		{
-			const nlohmann::json price_data = price_data_future.get();
-			const nlohmann::json id_data = id_data_future.get();
-			const nlohmann::json limit_data = limit_data_future.get();
-			const nlohmann::json volume_data = volume_data_future.get();
-			const nlohmann::json high_alch_data = high_alch_data_future.get();
-
-			// Skip the first two values since they are useless
-			auto json_begin = price_data.begin();
-			json_begin++;
-			json_begin++;
-
-			for (auto i = json_begin; i != price_data.end(); ++i)
+			for (auto i = api_data.price.begin(); i != api_data.price.end(); ++i)
 			{
 				item item {
 					i.key(),
-					id_data[i.key()],
+					api_data.id[i.key()],
 					i.value(),
-					limit_data[i.key()]
+					api_data.limit[i.key()]
 				};
 
-				if (volume_data.contains(i.key()))
-					item.volume = volume_data.at(i.key());
+				if (api_data.volume.contains(i.key()))
+					item.volume = api_data.volume.at(i.key());
 
-				if (high_alch_data.contains(i.key()))
-					item.high_alch = high_alch_data.at(i.key());
+				if (api_data.high_alch.contains(i.key()))
+					item.high_alch = api_data.high_alch.at(i.key());
 
 				db["items"].push_back(item);
 			}
@@ -117,12 +88,8 @@ namespace ge
 				return;
 		}
 
-		// Download the latest price and volume data
-		std::future<nlohmann::json> price_data_future = std::async(std::launch::async,
-				download_json, price_json_url, 0);
-
-		std::future<nlohmann::json> volume_data_future = std::async(std::launch::async,
-				download_json, volume_json_url, 0);
+		// Download the latest information from the API
+		api_bulk_data api_data;
 
 		nlohmann::json db;
 
@@ -131,29 +98,76 @@ namespace ge
 			std::ifstream db_file(db_path);
 			db = nlohmann::json::parse(db_file);
 
-			nlohmann::json price_data = price_data_future.get();
-			price_data.erase("%LAST_UPDATE%");
-			price_data.erase("%LAST_UPDATE_F%");
-
-			nlohmann::json volume_data = volume_data_future.get();
-			volume_data.erase("%LAST_UPDATE%");
-			volume_data.erase("%LAST_UPDATE_F%");
-
 			assert(!db["items"].empty());
 			for (size_t i = 0; i < db["items"].size(); ++i)
 			{
 				const std::string& item_name = db["items"][i]["name"];
-				assert(price_data.contains(item_name));
 
-				db["items"][i]["price"] = price_data[item_name];
+				// If an item name has changed or is invalid, remove the item
+				if (!api_data.price.contains(item_name))
+				{
+					db["items"].erase(i);
+					--i;
+					continue;
+				}
 
-				if (volume_data.contains(item_name))
-					db["items"][i]["volume"] = volume_data.at(item_name);
+				assert(api_data.price.contains(item_name));
+
+				db["items"][i]["price"] = api_data.price[item_name];
+
+				if (api_data.volume.contains(item_name))
+					db["items"][i]["volume"] = api_data.volume.at(item_name);
 				else
 					db["items"][i]["volume"] = 0;
 
-				price_data.erase(item_name);
-				volume_data.erase(item_name);
+				if (api_data.high_alch.contains(item_name))
+					db["items"][i]["high_alch"] = api_data.high_alch.at(item_name);
+
+				// Erase the item from the price data so that there's less
+				// looping to do when handling new items in the next loop
+				api_data.price.erase(item_name);
+			}
+
+			const bool new_items_exist = !api_data.price.empty();
+
+			// Handle new and/or missing items
+			for (auto it = api_data.price.begin(); it != api_data.price.end(); ++it)
+			{
+				item item {
+					it.key(),
+					api_data.id[it.key()],
+					it.value(),
+					api_data.limit[it.key()]
+				};
+
+				if (api_data.volume.contains(it.key()))
+					item.volume = api_data.volume.at(it.key());
+
+				if (api_data.high_alch.contains(it.key()))
+					item.high_alch = api_data.high_alch.at(it.key());
+
+				db["items"].push_back(item);
+			}
+
+			// If there were new items found, sort the items alphabetically to keep the order
+			if (new_items_exist)
+			{
+				std::sort(db["items"].begin(), db["items"].end(),
+					[](const nlohmann::json& item_a, const nlohmann::json& item_b)
+					{
+						const std::string& item_a_name = item_a["name"];
+						const std::string& item_b_name = item_b["name"];
+
+						for (size_t i = 0; i < item_a_name.size() && i < item_b_name.size(); ++i)
+						{
+							if (item_a_name.at(i) == item_b_name.at(i))
+								continue;
+
+							return item_a_name.at(i) < item_b_name.at(i);
+						}
+
+						return true;
+					});
 			}
 		}
 
