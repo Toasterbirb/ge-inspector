@@ -26,6 +26,7 @@ namespace ge
 			{ "category", i.category },
 			{ "price_history", i.price_history },
 			{ "prev_price_hist_update", i.last_price_history_update },
+			{ "last_random_time", i.last_random_time },
 		};
 	}
 
@@ -41,6 +42,10 @@ namespace ge
 		j.at("category").get_to(i.category);
 		j.at("price_history").get_to(i.price_history);
 		j.at("prev_price_hist_update").get_to(i.last_price_history_update);
+
+		// for backwards compat reasons, the json might not have this key
+		if (j.contains("last_random_time"))
+			j.at("last_random_time").get_to(i.last_random_time);
 	}
 
 	std::string category_id_to_str(const u8 category_id)

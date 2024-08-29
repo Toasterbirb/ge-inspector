@@ -38,6 +38,9 @@ namespace ge
 
 		std::vector<u64> price_history;
 		u64 last_price_history_update{};
+
+		// when was this item last shown randomly
+		u64 last_random_time{};
 	};
 
 	const static inline std::string all_category = "all";

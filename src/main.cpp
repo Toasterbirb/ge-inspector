@@ -8,6 +8,7 @@
 #include "Random.hpp"
 #include "Types.hpp"
 
+#include <chrono>
 #include <clipp.h>
 #include <iomanip>
 #include <iostream>
@@ -15,6 +16,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+using minutes = u32;
 
 int main(int argc, char** argv)
 {
@@ -32,6 +34,7 @@ int main(int argc, char** argv)
 	bool print_price_history = false;
 	bool print_category_list = false;
 	bool print_count = false;
+	minutes min_random_age{0};
 
 	ge::filter filter;
 
@@ -77,7 +80,8 @@ int main(int argc, char** argv)
 		 & clipp::option("--quiet", "-q").set(quiet_db_update) % "only update the db and don't print out any results"),
 		clipp::option("--list-categories").set(print_category_list) % "list all of the item categories",
 		clipp::option("--member", "-m").set(check_member_status) % "update missing members data",
-		clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results",
+		(clipp::option("--random", "-r").set(pick_random_item) % "pick a random item from results"
+		 & (clipp::option("--age", "-a") & clipp::number("minutes").set(min_random_age)) % "only show random flips that haven't been shown in x-amount of minutes"),
 		clipp::option("--terse", "-t").set(print_terse_format) % "print the item info in a way that is easier to parse with 3rd party programs (works only if printing info for a singular item)",
 		clipp::option("--history").set(print_price_history) % "print price history the item (works only if printing info for a singular item)",
 		clipp::option("--count").set(print_count) % "show result count at the end of the output",
@@ -189,38 +193,52 @@ int main(int argc, char** argv)
 
 		ge::item item = filtered_items.at(rand() % filtered_items.size());
 
-		// If a members item filter is used, loop until an item is found that matches the filter
-		if (member_filter != ge::members_item::unknown)
+		const static auto now = std::chrono::system_clock::now();
+		const auto random_item_filter = [&](ge::item& item) -> bool
 		{
-			u64 checked_item_count = 0;
-			constexpr u64 checked_items_hard_cap = 64;
-			const u64 max_checked_items = filtered_items.size() < checked_items_hard_cap ? filtered_items.size() : checked_items_hard_cap;
-
-			std::cout << "\rItems checked: 0/" << max_checked_items << std::flush;
-			while (item.members != member_filter && checked_item_count < max_checked_items)
+			// Check if the item is a members item
+			if (check_member_status && ge::update_item_member_status(item)) [[unlikely]]
 			{
-				item = filtered_items.at(rand() % filtered_items.size());
-
-				// Check if the item is a members item
-				if (ge::update_item_member_status(item)) [[unlikely]]
-				{
-					ge::update_item(item);
-					ge::update_filtered_item_data(filtered_items);
-				}
-
-				++checked_item_count;
-				std::cout << "\rItems checked: " << checked_item_count << "/" << max_checked_items << std::flush;
+				ge::update_item(item);
+				ge::update_filtered_item_data(filtered_items);
 			}
-			ge::clear_current_line();
 
-			if (checked_item_count >= max_checked_items) [[unlikely]]
-				std::cout << "Reached the maximum amount of items to check. Try again with different search options\n";
+			bool member_check = member_filter == ge::members_item::unknown
+				? true // we are not filtering by member status
+				: item.members == member_filter;
+
+			const auto age = std::chrono::system_clock::time_point{ std::chrono::nanoseconds{ item.last_random_time } };
+			const auto duration = std::chrono::duration(now - age);
+
+			bool age_check = min_random_age == 0
+				? true // only check the age if the minimum is > 0
+				: std::chrono::duration_cast<std::chrono::minutes>(duration).count() >= min_random_age;
+
+			return member_check && age_check;
+		};
+
+		u64 checked_item_count = 0;
+		constexpr u64 checked_items_hard_cap = 64;
+		const u64 max_checked_items = filtered_items.size() < checked_items_hard_cap ? filtered_items.size() : checked_items_hard_cap;
+
+		std::cout << "\rItems checked: 0/" << max_checked_items << std::flush;
+		while (!random_item_filter(item) && checked_item_count < max_checked_items)
+		{
+			item = filtered_items.at(rand() % filtered_items.size());
+			++checked_item_count;
+			std::cout << "\rItems checked: " << checked_item_count << "/" << max_checked_items << std::flush;
 		}
+		ge::clear_current_line();
 
-		if (item.members == ge::members_item::unknown && check_member_status)
-			ge::update_item_member_status(item);
+		if (checked_item_count >= max_checked_items) [[unlikely]]
+			std::cout << "Reached the maximum amount of items to check. Try again with different search options\n";
 
 		ge::print_item_info(item, print_short_price, print_terse_format, print_price_history, colorscheme);
+
+		// Update the item check age
+		item.last_random_time = now.time_since_epoch().count();
+		ge::update_item(item);
+		ge::write_db();
 	}
 
 	// Print the results normally if there are any results to print
