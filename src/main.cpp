@@ -203,14 +203,14 @@ int main(int argc, char** argv)
 				ge::update_filtered_item_data(filtered_items);
 			}
 
-			bool member_check = member_filter == ge::members_item::unknown
+			const bool member_check = member_filter == ge::members_item::unknown
 				? true // we are not filtering by member status
 				: item.members == member_filter;
 
 			const auto age = std::chrono::system_clock::time_point{ std::chrono::nanoseconds{ item.last_random_time } };
 			const auto duration = std::chrono::duration(now - age);
 
-			bool age_check = min_random_age == 0
+			const bool age_check = min_random_age == 0
 				? true // only check the age if the minimum is > 0
 				: std::chrono::duration_cast<std::chrono::minutes>(duration).count() >= min_random_age;
 
