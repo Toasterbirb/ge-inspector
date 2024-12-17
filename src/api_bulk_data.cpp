@@ -36,17 +36,22 @@ namespace ge
 
 		price = price_data_future.get();
 		remove_update_time_stamps(price);
+		assert(!price.empty());
 
 		id = id_data_future.get();
 		remove_update_time_stamps(id);
+		assert(!id.empty());
 
 		limit = limit_data_future.get();
 		remove_update_time_stamps(limit);
+		assert(!limit.empty());
 
 		volume = volume_data_future.get();
 		remove_update_time_stamps(volume);
+		assert(!volume.empty());
 
 		high_alch = high_alch_data_future.get();
 		remove_update_time_stamps(high_alch);
+		assert(!high_alch.empty());
 	}
 }
