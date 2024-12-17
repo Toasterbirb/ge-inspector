@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -42,6 +43,15 @@ namespace ge
 		{
 			for (auto i = api_data.price.begin(); i != api_data.price.end(); ++i)
 			{
+				// if there is no limit information for the item, skip it entirely
+				if (!api_data.limit.contains(i.key()))
+					continue;
+
+				// if the item is missing its ID, use the hash of the item name as the ID
+				const i32 item_id = api_data.id.contains(i.key())
+					? static_cast<i32>(api_data.id[i.key()])
+					: static_cast<i32>(std::hash<std::string>{}(i.key()));
+
 				item item {
 					i.key(),
 					api_data.id[i.key()],
@@ -133,6 +143,12 @@ namespace ge
 			// Handle new and/or missing items
 			for (auto it = api_data.price.begin(); it != api_data.price.end(); ++it)
 			{
+				// skip items that don't have limit information (the same as in init_db)
+				// if the item doesn't have limit info, its probably missing some other stuff
+				// aswell and keeping track of it is a waste of time
+				if (!api_data.limit.contains(it.key()))
+					continue;
+
 				item item {
 					it.key(),
 					api_data.id[it.key()],
